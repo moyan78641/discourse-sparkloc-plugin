@@ -43,6 +43,8 @@ zh_CN:
         manage: "管理订阅"
         cancel: "取消订阅"
         cancel_confirm: "确定要取消订阅吗？取消后，订阅将在当前计费周期结束前保持有效。"
+        cancel_confirm_yes: "确定取消"
+        cancel_confirm_no: "再想想"
         period_end: "有效期至"
         loading: "加载中..."
         error: "无法加载订阅信息"

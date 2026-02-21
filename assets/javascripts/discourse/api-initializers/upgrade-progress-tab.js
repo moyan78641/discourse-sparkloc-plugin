@@ -19,4 +19,11 @@ export default apiInitializer("1.0", (api) => {
       }
     };
   });
+
+  api.addQuickAccessProfileItem({
+    icon: "credit-card",
+    href: `/u/${currentUser.username}/billing/subscriptions`,
+    content: "账单",
+    className: "billing-link",
+  });
 });

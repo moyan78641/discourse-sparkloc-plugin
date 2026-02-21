@@ -2,6 +2,7 @@ import RouteTemplate from "ember-route-template";
 import Component from "@glimmer/component";
 import { tracked } from "@glimmer/tracking";
 import { action } from "@ember/object";
+import { on } from "@ember/modifier";
 import { ajax } from "discourse/lib/ajax";
 import DButton from "discourse/components/d-button";
 import { i18n } from "discourse-i18n";
@@ -11,6 +12,7 @@ class SubscriptionPage extends Component {
   @tracked subscribing = false;
   @tracked message = null;
   @tracked messageType = null;
+  @tracked showCancelConfirm = false;
 
   get subscription() {
     return this.args.model;
@@ -62,17 +64,23 @@ class SubscriptionPage extends Component {
     }
   }
 
-  @action
-  async cancelSubscription() {
-    if (!confirm(i18n("sparkloc.billing.cancel_confirm"))) return;
+  @action requestCancel() {
+    this.showCancelConfirm = true;
+  }
 
+  @action dismissCancel() {
+    this.showCancelConfirm = false;
+  }
+
+  @action
+  async confirmCancel() {
+    this.showCancelConfirm = false;
     this.canceling = true;
     this.message = null;
     try {
       await ajax("/sparkloc/creem/cancel.json", { type: "POST" });
       this.message = i18n("sparkloc.billing.cancel_success");
       this.messageType = "success";
-      // 刷新数据
       const updated = await ajax("/sparkloc/creem/subscription.json");
       Object.assign(this.args.model, updated);
     } catch (e) {
@@ -98,6 +106,20 @@ class SubscriptionPage extends Component {
 
   <template>
     <div class="sparkloc-billing-page">
+
+      {{#if this.showCancelConfirm}}
+        <div class="sparkloc-modal-overlay" {{on "click" this.dismissCancel}} role="dialog">
+          <div class="sparkloc-modal">
+            <h3>{{i18n "sparkloc.billing.cancel"}}</h3>
+            <p>{{i18n "sparkloc.billing.cancel_confirm"}}</p>
+            <div class="sparkloc-modal-actions">
+              <button class="btn btn-danger" type="button" {{on "click" this.confirmCancel}}>{{i18n "sparkloc.billing.cancel_confirm_yes"}}</button>
+              <button class="btn btn-default" type="button" {{on "click" this.dismissCancel}}>{{i18n "sparkloc.billing.cancel_confirm_no"}}</button>
+            </div>
+          </div>
+        </div>
+      {{/if}}
+
       <h2>{{i18n "sparkloc.billing.subscriptions"}}</h2>
 
       <div class="sparkloc-guide-box">
@@ -167,7 +189,7 @@ class SubscriptionPage extends Component {
             />
             {{#if this.isActive}}
               <DButton
-                @action={{this.cancelSubscription}}
+                @action={{this.requestCancel}}
                 @label="sparkloc.billing.cancel"
                 @disabled={{this.canceling}}
                 class="btn-danger"
