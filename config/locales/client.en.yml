@@ -14,3 +14,8 @@ en:
         title: "Certified Merchants"
         website: "Website"
         discourse_user: "Forum Profile"
+      oauth_apps:
+        title: "OAuth2 Application Management"
+        create: "Create New App"
+        delete: "Delete"
+        reset_secret: "Reset Secret"

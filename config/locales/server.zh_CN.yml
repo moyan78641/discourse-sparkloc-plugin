@@ -1,5 +1,5 @@
 zh_CN:
   site_settings:
-    sparkloc_enabled: "启用 Sparkloc 插件（OAuth2 代理、升级进度、认证商家）"
-    sparkloc_backend_url: "Rust 后端地址（默认 http://127.0.0.1:3000）"
-    sparkloc_internal_api_key: "内部 API Key（用于管理员操作商家等）"
+    sparkloc_enabled: "启用 Sparkloc 插件（OAuth2 代理、升级进度、认证商家、应用管理）"
+    sparkloc_backend_url: "Rust 后端地址（默认 https://auth.sparkloc.com）"
+    sparkloc_internal_api_key: "内部 API Key（用于插件与 Rust 后端通信）"

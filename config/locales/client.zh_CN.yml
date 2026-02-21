@@ -14,3 +14,8 @@ zh_CN:
         title: "认证商家"
         website: "官网"
         discourse_user: "论坛主页"
+      oauth_apps:
+        title: "OAuth2 应用管理"
+        create: "创建新应用"
+        delete: "删除"
+        reset_secret: "重置密钥"

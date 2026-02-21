@@ -146,3 +146,141 @@
     margin: 2px 0;
   }
 }
+
+// ========================================
+// OAuth Apps Page (/oauth-apps)
+// ========================================
+.sparkloc-oauth-apps-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+
+  h2 {
+    margin-bottom: 8px;
+  }
+
+  .oauth-apps-desc {
+    color: var(--primary-medium);
+    margin-bottom: 16px;
+  }
+}
+
+.oauth-credential-notice {
+  background: var(--success-low);
+  border: 1px solid var(--success-medium);
+  border-radius: 6px;
+  padding: 16px;
+  margin-bottom: 16px;
+
+  h3 {
+    margin: 0 0 8px;
+  }
+
+  .warning-text {
+    color: var(--danger);
+    font-weight: bold;
+    margin-bottom: 12px;
+  }
+
+  .credential-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+
+  .credential-label {
+    font-weight: bold;
+    min-width: 100px;
+  }
+
+  .credential-value {
+    background: var(--primary-very-low);
+    padding: 4px 8px;
+    border-radius: 4px;
+    word-break: break-all;
+    font-size: 0.9em;
+
+    &.secret {
+      color: var(--danger);
+    }
+  }
+}
+
+.oauth-error-notice {
+  background: var(--danger-low);
+  border: 1px solid var(--danger-medium);
+  color: var(--danger);
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+}
+
+.oauth-actions-bar {
+  margin-bottom: 16px;
+}
+
+.oauth-create-form {
+  background: var(--primary-very-low);
+  border-radius: 6px;
+  padding: 16px;
+  margin-bottom: 16px;
+
+  .form-row {
+    margin-bottom: 12px;
+
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+
+    input {
+      width: 100%;
+      max-width: 500px;
+    }
+  }
+}
+
+.oauth-apps-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
+
+  th, td {
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--primary-low);
+  }
+
+  th {
+    font-weight: bold;
+    background: var(--primary-very-low);
+  }
+
+  code {
+    font-size: 0.85em;
+    background: var(--primary-very-low);
+    padding: 2px 4px;
+    border-radius: 3px;
+  }
+
+  .redirect-uri-cell {
+    max-width: 200px;
+    word-break: break-all;
+    font-size: 0.9em;
+  }
+
+  .actions-cell {
+    white-space: nowrap;
+
+    .btn + .btn {
+      margin-left: 4px;
+    }
+  }
+}
+
+.no-apps-text {
+  color: var(--primary-medium);
+  margin-top: 20px;
+}
