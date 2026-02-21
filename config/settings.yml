@@ -2,13 +2,13 @@ plugins:
   sparkloc_enabled:
     default: true
     client: true
-  sparkloc_backend_url:
-    default: "https://auth.sparkloc.com"
-    client: false
-  sparkloc_internal_api_key:
+  sparkloc_discourse_sso_secret:
     default: ""
     client: false
     secret: true
+  sparkloc_oauth2_issuer_url:
+    default: "https://sparkloc.com/oauth-provider"
+    client: false
   sparkloc_creem_enabled:
     default: false
     client: true

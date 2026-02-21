@@ -1,128 +1,138 @@
 # frozen_string_literal: true
 
-require "net/http"
-require "json"
-
 module ::DiscourseSparkloc
   class AppsController < ::ApplicationController
     requires_plugin PLUGIN_NAME
     before_action :ensure_logged_in
 
-    # GET /sparkloc/apps.json — list current user's apps
+    # GET /sparkloc/apps.json
     def index
-      resp = proxy_get("/api/apps")
-      render json: JSON.parse(resp.body), status: resp.code.to_i
-    rescue => e
-      render json: { error: e.message }, status: 502
+      apps = load_all_apps.select { |a| a["owner_discourse_id"] == current_user.id }
+      render json: { apps: apps }
     end
 
-    # POST /sparkloc/apps.json — create app
+    # POST /sparkloc/apps.json
     def create
-      body = { name: params[:name], redirect_uris: params[:redirect_uris] }.to_json
-      resp = proxy_post("/api/apps", body: body)
-      render json: JSON.parse(resp.body), status: resp.code.to_i
-    rescue => e
-      render json: { error: e.message }, status: 502
+      if params[:name].blank? || params[:redirect_uris].blank?
+        return render json: { error: "名称和回调地址不能为空" }, status: 400
+      end
+
+      id = next_id("oauth2_app_next_id")
+      client_id = SecureRandom.uuid
+      client_secret = SecureRandom.uuid
+      now = Time.now.strftime("%Y-%m-%d %H:%M")
+
+      app = {
+        "id" => id,
+        "client_id" => client_id,
+        "client_secret" => client_secret,
+        "name" => params[:name],
+        "redirect_uris" => params[:redirect_uris],
+        "owner_discourse_id" => current_user.id,
+        "created_at" => now,
+        "updated_at" => now,
+      }
+      save_app(id, app)
+      render json: { id: id, client_id: client_id, client_secret: client_secret, name: params[:name], redirect_uris: params[:redirect_uris] }
     end
 
-    # DELETE /sparkloc/apps/:id.json — delete app
-    def destroy
-      resp = proxy_delete("/api/apps/#{params[:id]}")
-      render json: JSON.parse(resp.body), status: resp.code.to_i
-    rescue => e
-      render json: { error: e.message }, status: 502
-    end
-
-    # PUT /sparkloc/apps/:id.json — update app name/redirect_uris
+    # PUT /sparkloc/apps/:id.json
     def update
-      body = { name: params[:name], redirect_uris: params[:redirect_uris] }.to_json
-      resp = proxy_put("/api/apps/#{params[:id]}", body: body)
-      render json: JSON.parse(resp.body), status: resp.code.to_i
-    rescue => e
-      render json: { error: e.message }, status: 502
+      app = load_app(params[:id])
+      return render json: { error: "not found" }, status: 404 unless app
+      return render json: { error: "forbidden" }, status: 403 unless app["owner_discourse_id"] == current_user.id
+
+      app["name"] = params[:name] if params[:name].present?
+      app["redirect_uris"] = params[:redirect_uris] if params[:redirect_uris].present?
+      app["updated_at"] = Time.now.strftime("%Y-%m-%d %H:%M")
+      save_app(params[:id], app)
+      render json: { id: app["id"], client_id: app["client_id"], name: app["name"], redirect_uris: app["redirect_uris"] }
     end
 
-    # POST /sparkloc/apps/:id/reset-secret.json — reset client secret
+    # DELETE /sparkloc/apps/:id.json
+    def destroy
+      app = load_app(params[:id])
+      return render json: { error: "not found" }, status: 404 unless app
+      return render json: { error: "forbidden" }, status: 403 unless app["owner_discourse_id"] == current_user.id
+
+      PluginStore.remove(PLUGIN_NAME, "oauth2_app::#{params[:id]}")
+      render json: { ok: true }
+    end
+
+    # POST /sparkloc/apps/:id/reset-secret.json
     def reset_secret
-      resp = proxy_post("/api/apps/#{params[:id]}/reset-secret")
-      render json: JSON.parse(resp.body), status: resp.code.to_i
-    rescue => e
-      render json: { error: e.message }, status: 502
+      app = load_app(params[:id])
+      return render json: { error: "not found" }, status: 404 unless app
+      return render json: { error: "forbidden" }, status: 403 unless app["owner_discourse_id"] == current_user.id
+
+      new_secret = SecureRandom.uuid
+      app["client_secret"] = new_secret
+      app["updated_at"] = Time.now.strftime("%Y-%m-%d %H:%M")
+      save_app(params[:id], app)
+      render json: { client_id: app["client_id"], client_secret: new_secret }
     end
 
-    # GET /sparkloc/authorizations.json — list user's authorized apps
+    # GET /sparkloc/authorizations.json
     def authorizations
-      resp = proxy_get("/api/authorizations")
-      render json: JSON.parse(resp.body), status: resp.code.to_i
-    rescue => e
-      render json: { error: e.message }, status: 502
+      auths = load_all_authorizations.select { |a| a["discourse_id"] == current_user.id }
+      render json: { authorizations: auths }
     end
 
-    # POST /sparkloc/authorizations/:id/revoke.json — revoke authorization
+    # POST /sparkloc/authorizations/:id/revoke.json
     def revoke_authorization
-      resp = proxy_post("/api/authorizations/#{params[:id]}/revoke")
-      render json: JSON.parse(resp.body), status: resp.code.to_i
-    rescue => e
-      render json: { error: e.message }, status: 502
+      auth = load_authorization(params[:id])
+      return render json: { error: "not found" }, status: 404 unless auth
+      return render json: { error: "forbidden" }, status: 403 unless auth["discourse_id"] == current_user.id
+
+      auth["status"] = "revoked"
+      save_authorization(params[:id], auth)
+      render json: { ok: true }
     end
 
     private
 
-    def backend_url
-      SiteSetting.sparkloc_backend_url.chomp("/")
+    def next_id(key)
+      current = PluginStore.get(PLUGIN_NAME, key).to_i
+      new_id = current + 1
+      PluginStore.set(PLUGIN_NAME, key, new_id)
+      new_id
     end
 
-    def build_http(uri)
-      http = Net::HTTP.new(uri.host, uri.port)
-      http.use_ssl = (uri.scheme == "https")
-      http.open_timeout = 10
-      http.read_timeout = 15
-      http
+    def load_app(id)
+      parse_record(PluginStore.get(PLUGIN_NAME, "oauth2_app::#{id}"))
     end
 
-    # Forward the user's Discourse session as a Bearer token to Rust.
-    # The Rust backend validates Bearer tokens via its own OIDC logic,
-    # but for the plugin proxy we use the Discourse API key to fetch
-    # user info and pass discourse_id. Instead, we forward the user's
-    # own access token if present, or we call Rust with X-Discourse-User header.
-    #
-    # Simpler approach: the Ruby controller already verified the user is logged in.
-    # We pass the discourse user id to Rust via a trusted internal header,
-    # and Rust trusts it because of the X-API-Key.
-    def proxy_get(path)
-      uri = URI("#{backend_url}#{path}?discourse_id=#{current_user.id}")
-      http = build_http(uri)
-      req = Net::HTTP::Get.new(uri)
-      req["X-API-Key"] = SiteSetting.sparkloc_internal_api_key
-      http.request(req)
+    def save_app(id, data)
+      PluginStore.set(PLUGIN_NAME, "oauth2_app::#{id}", data.to_json)
     end
 
-    def proxy_post(path, body: nil)
-      uri = URI("#{backend_url}#{path}?discourse_id=#{current_user.id}")
-      http = build_http(uri)
-      req = Net::HTTP::Post.new(uri)
-      req["Content-Type"] = "application/json"
-      req["X-API-Key"] = SiteSetting.sparkloc_internal_api_key
-      req.body = body if body
-      http.request(req)
+    def load_all_apps
+      PluginStoreRow.where(plugin_name: PLUGIN_NAME)
+                    .where("key LIKE 'oauth2\\_app::%'")
+                    .where.not(key: "oauth2_app_next_id")
+                    .filter_map { |r| parse_record(r.value) }
     end
 
-    def proxy_delete(path)
-      uri = URI("#{backend_url}#{path}?discourse_id=#{current_user.id}")
-      http = build_http(uri)
-      req = Net::HTTP::Delete.new(uri)
-      req["X-API-Key"] = SiteSetting.sparkloc_internal_api_key
-      http.request(req)
+    def load_authorization(id)
+      parse_record(PluginStore.get(PLUGIN_NAME, "authorization::#{id}"))
     end
 
-    def proxy_put(path, body: nil)
-      uri = URI("#{backend_url}#{path}?discourse_id=#{current_user.id}")
-      http = build_http(uri)
-      req = Net::HTTP::Put.new(uri)
-      req["Content-Type"] = "application/json"
-      req["X-API-Key"] = SiteSetting.sparkloc_internal_api_key
-      req.body = body if body
-      http.request(req)
+    def save_authorization(id, data)
+      PluginStore.set(PLUGIN_NAME, "authorization::#{id}", data.to_json)
+    end
+
+    def load_all_authorizations
+      PluginStoreRow.where(plugin_name: PLUGIN_NAME)
+                    .where("key LIKE 'authorization::%'")
+                    .where.not(key: "authorization_next_id")
+                    .filter_map { |r| parse_record(r.value) }
+    end
+
+    def parse_record(raw)
+      return nil if raw.nil?
+      raw.is_a?(String) ? JSON.parse(raw) : raw
+    rescue JSON::ParserError
+      nil
     end
   end
 end

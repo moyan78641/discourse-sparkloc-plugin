@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 # name: discourse-sparkloc-plugin
-# about: Sparkloc OAuth2 Provider proxy, upgrade progress tab, and certified merchants page
-# version: 0.1.0
+# about: Sparkloc OAuth2/OIDC Provider, upgrade progress, certified merchants, and billing
+# version: 0.2.0
 # authors: Sparkloc
 # url: https://sparkloc.com
 
@@ -11,6 +11,8 @@ module ::DiscourseSparkloc
 end
 
 require_relative "lib/discourse_sparkloc/engine"
+require_relative "lib/discourse_sparkloc/jwt_provider"
+require_relative "lib/discourse_sparkloc/sso_helper"
 
 enabled_site_setting :sparkloc_enabled
 

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Engine routes (upgrade progress, merchants JSON, app management proxy, creem)
+# Engine routes (upgrade progress, merchants, app management, creem)
 DiscourseSparkloc::Engine.routes.draw do
   get "/upgrade-progress" => "upgrade_progress#index"
   get "/merchants" => "merchants#index"
@@ -10,7 +10,7 @@ DiscourseSparkloc::Engine.routes.draw do
   put    "/admin/merchants/:id" => "merchants_admin#update"
   delete "/admin/merchants/:id" => "merchants_admin#destroy"
 
-  # OAuth app management proxy (user-facing, Bearer token auth)
+  # OAuth app management (native PluginStore)
   get    "/apps"                  => "apps#index"
   post   "/apps"                  => "apps#create"
   put    "/apps/:id"              => "apps#update"
@@ -44,20 +44,20 @@ Discourse::Application.routes.draw do
   get "/u/:username/billing/subscriptions" => "users#show"
 end
 
-# OAuth2 proxy routes — directly on root, no engine prefix
+# OAuth2/OIDC endpoints — native Ruby implementation
 Discourse::Application.routes.draw do
   scope module: "discourse_sparkloc" do
-    get  "/oauth-provider/auth"       => "oauth_proxy#auth"
-    get  "/oauth-provider/callback"   => "oauth_proxy#callback"
-    post "/oauth-provider/authorize"  => "oauth_proxy#authorize_user"
-    post "/oauth-provider/deny"       => "oauth_proxy#deny"
-    post "/oauth-provider/token"      => "oauth_proxy#token"
-    get  "/oauth-provider/userinfo"   => "oauth_proxy#userinfo"
-    get  "/oauth-provider/certs"      => "oauth_proxy#certs"
-    post "/oauth-provider/introspect" => "oauth_proxy#introspect"
-    post "/oauth-provider/revoke"     => "oauth_proxy#revoke"
+    get  "/oauth-provider/auth"       => "oauth2#auth"
+    get  "/oauth-provider/callback"   => "oauth2#callback"
+    post "/oauth-provider/authorize"  => "oauth2#authorize_user"
+    post "/oauth-provider/deny"       => "oauth2#deny"
+    post "/oauth-provider/token"      => "oauth2#token"
+    get  "/oauth-provider/userinfo"   => "oauth2#userinfo"
+    get  "/oauth-provider/certs"      => "oauth2#certs"
+    post "/oauth-provider/introspect" => "oauth2#introspect"
+    post "/oauth-provider/revoke"     => "oauth2#revoke"
 
     # OIDC discovery document
-    get "/.well-known/openid-configuration" => "oauth_proxy#openid_configuration"
+    get "/.well-known/openid-configuration" => "oauth2#openid_configuration"
   end
 end
