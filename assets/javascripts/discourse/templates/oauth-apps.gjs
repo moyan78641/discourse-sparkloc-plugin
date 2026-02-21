@@ -3,7 +3,7 @@ import Component from "@glimmer/component";
 import { tracked } from "@glimmer/tracking";
 import { action } from "@ember/object";
 import { on } from "@ember/modifier";
-import { fn, eq } from "@ember/helper";
+import { fn } from "@ember/helper";
 import { ajax } from "discourse/lib/ajax";
 
 class OauthAppsPage extends Component {
@@ -137,6 +137,14 @@ class OauthAppsPage extends Component {
     this.visibleSecretId = this.visibleSecretId === appId ? null : appId;
   }
 
+  get appsWithState() {
+    return this.apps.map((app) => ({
+      ...app,
+      isEditing: app.id === this.editingAppId,
+      isSecretVisible: app.id === this.visibleSecretId,
+    }));
+  }
+
   <template>
     <div class="sparkloc-oauth-apps-page">
 
@@ -213,8 +221,8 @@ class OauthAppsPage extends Component {
             </tr>
           </thead>
           <tbody>
-            {{#each this.apps as |app|}}
-              {{#if (eq this.editingAppId app.id)}}
+            {{#each this.appsWithState as |app|}}
+              {{#if app.isEditing}}
                 <tr class="editing-row">
                   <td><input type="text" value={{this.editName}} {{on "input" this.updateEditName}} /></td>
                   <td><code>{{app.client_id}}</code></td>
@@ -231,13 +239,13 @@ class OauthAppsPage extends Component {
                   <td>{{app.name}}</td>
                   <td><code>{{app.client_id}}</code></td>
                   <td class="secret-cell">
-                    {{#if (eq this.visibleSecretId app.id)}}
+                    {{#if app.isSecretVisible}}
                       <code>{{app.client_secret}}</code>
                     {{else}}
                       <code class="secret-masked">••••••••••••</code>
                     {{/if}}
                     <button class="btn btn-flat btn-icon btn-small secret-toggle" type="button" {{on "click" (fn this.toggleSecret app.id)}} title="显示/隐藏密钥">
-                      {{#if (eq this.visibleSecretId app.id)}}🙈{{else}}👁{{/if}}
+                      {{#if app.isSecretVisible}}🙈{{else}}👁{{/if}}
                     </button>
                   </td>
                   <td class="redirect-uri-cell">{{app.redirect_uris}}</td>

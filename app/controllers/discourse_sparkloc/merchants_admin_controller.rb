@@ -37,7 +37,9 @@ module ::DiscourseSparkloc
     private
 
     def merchant_params
-      params.permit(:name, :logo_url, :website, :discourse_username, :description, :sort_order)
+      p = params.permit(:name, :logo_url, :website, :discourse_username, :description, :sort_order)
+      p[:sort_order] = p[:sort_order].to_i if p[:sort_order].present?
+      p
     end
 
     def proxy_to_rust(method, path, body: nil)

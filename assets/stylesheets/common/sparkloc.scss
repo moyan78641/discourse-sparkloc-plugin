@@ -145,6 +145,47 @@
     font-size: 0.85em;
     margin: 2px 0;
   }
+
+  .merchant-admin-actions {
+    margin-top: 8px;
+    display: flex;
+    gap: 4px;
+  }
+}
+
+.merchant-admin-bar {
+  margin-bottom: 16px;
+}
+
+.merchant-form {
+  background: var(--primary-very-low);
+  border-radius: 6px;
+  padding: 16px;
+  margin-bottom: 20px;
+
+  h3 {
+    margin: 0 0 12px;
+  }
+
+  .form-row {
+    margin-bottom: 12px;
+
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+
+    input, textarea {
+      width: 100%;
+      max-width: 500px;
+    }
+  }
+
+  .form-actions {
+    display: flex;
+    gap: 8px;
+  }
 }
 
 // ========================================
