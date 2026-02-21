@@ -237,15 +237,18 @@ class MerchantsPage extends Component {
                   {{/if}}
                 </div>
                 <div class="merchant-card-back">
-                  <h3 class="merchant-name">{{merchant.name}}</h3>
+                  {{#if merchant.website}}
+                    <a class="merchant-name-link" href={{merchant.website}} target="_blank" rel="noopener noreferrer">
+                      <h3 class="merchant-name">{{merchant.name}}</h3>
+                    </a>
+                  {{else}}
+                    <h3 class="merchant-name">{{merchant.name}}</h3>
+                  {{/if}}
                   {{#if merchant.description}}
                     <p class="merchant-desc">{{merchant.description}}</p>
                   {{/if}}
-                  {{#if merchant.website}}
-                    <a class="merchant-link" href={{merchant.website}} target="_blank" rel="noopener noreferrer">官网</a>
-                  {{/if}}
                   {{#if merchant.discourse_username}}
-                    <a class="merchant-link" href="/u/{{merchant.discourse_username}}">论坛主页</a>
+                    <a class="merchant-username-btn" href="/u/{{merchant.discourse_username}}">@{{merchant.discourse_username}}</a>
                   {{/if}}
                   {{#if this.isAdmin}}
                     <div class="merchant-admin-actions">

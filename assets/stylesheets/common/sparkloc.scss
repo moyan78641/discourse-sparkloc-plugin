@@ -101,9 +101,25 @@
   .merchant-card-back { transform: rotateY(180deg); }
   .merchant-logo { max-width: 120px; max-height: 120px; object-fit: contain; }
   .merchant-logo-placeholder { font-size: 1.2em; font-weight: bold; color: var(--primary-medium); text-align: center; }
-  .merchant-name { margin: 0 0 8px; font-size: 1.1em; }
+  .merchant-name { margin: 0 0 6px; font-size: 1.1em; text-align: center; }
+  .merchant-name-link {
+    text-decoration: none;
+    color: inherit;
+    &:hover .merchant-name { text-decoration: underline; }
+  }
   .merchant-desc { font-size: 0.85em; color: var(--primary-medium); text-align: center; margin: 0 0 8px; }
-  .merchant-link { font-size: 0.85em; margin: 2px 0; }
+  .merchant-username-btn {
+    display: inline-block;
+    margin-top: 6px;
+    padding: 4px 14px;
+    border-radius: 16px;
+    background: var(--tertiary);
+    color: var(--secondary);
+    font-size: 0.85em;
+    font-weight: 500;
+    text-decoration: none;
+    &:hover { opacity: 0.85; }
+  }
   .merchant-admin-actions { margin-top: 8px; display: flex; gap: 4px; }
 }
 
