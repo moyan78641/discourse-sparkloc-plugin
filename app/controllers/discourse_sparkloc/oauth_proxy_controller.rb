@@ -135,9 +135,13 @@ module ::DiscourseSparkloc
     end
 
     def passthrough_cookies(resp)
-      # Rust may send multiple Set-Cookie headers
-      resp.get_fields("Set-Cookie")&.each do |cookie_str|
-        response.headers.add("Set-Cookie", cookie_str)
+      cookies = resp.get_fields("Set-Cookie")
+      return unless cookies
+
+      cookies.each do |cookie_str|
+        # Rack uses \n to separate multiple Set-Cookie values in a single header
+        existing = response.headers["Set-Cookie"]
+        response.headers["Set-Cookie"] = existing ? "#{existing}\n#{cookie_str}" : cookie_str
       end
     end
 
