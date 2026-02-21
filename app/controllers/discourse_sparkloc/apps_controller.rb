@@ -33,9 +33,34 @@ module ::DiscourseSparkloc
       render json: { error: e.message }, status: 502
     end
 
+    # PUT /sparkloc/apps/:id.json — update app name/redirect_uris
+    def update
+      body = { name: params[:name], redirect_uris: params[:redirect_uris] }.to_json
+      resp = proxy_put("/api/apps/#{params[:id]}", body: body)
+      render json: JSON.parse(resp.body), status: resp.code.to_i
+    rescue => e
+      render json: { error: e.message }, status: 502
+    end
+
     # POST /sparkloc/apps/:id/reset-secret.json — reset client secret
     def reset_secret
       resp = proxy_post("/api/apps/#{params[:id]}/reset-secret")
+      render json: JSON.parse(resp.body), status: resp.code.to_i
+    rescue => e
+      render json: { error: e.message }, status: 502
+    end
+
+    # GET /sparkloc/authorizations.json — list user's authorized apps
+    def authorizations
+      resp = proxy_get("/api/authorizations")
+      render json: JSON.parse(resp.body), status: resp.code.to_i
+    rescue => e
+      render json: { error: e.message }, status: 502
+    end
+
+    # POST /sparkloc/authorizations/:id/revoke.json — revoke authorization
+    def revoke_authorization
+      resp = proxy_post("/api/authorizations/#{params[:id]}/revoke")
       render json: JSON.parse(resp.body), status: resp.code.to_i
     rescue => e
       render json: { error: e.message }, status: 502
@@ -87,6 +112,16 @@ module ::DiscourseSparkloc
       http = build_http(uri)
       req = Net::HTTP::Delete.new(uri)
       req["X-API-Key"] = SiteSetting.sparkloc_internal_api_key
+      http.request(req)
+    end
+
+    def proxy_put(path, body: nil)
+      uri = URI("#{backend_url}#{path}?discourse_id=#{current_user.id}")
+      http = build_http(uri)
+      req = Net::HTTP::Put.new(uri)
+      req["Content-Type"] = "application/json"
+      req["X-API-Key"] = SiteSetting.sparkloc_internal_api_key
+      req.body = body if body
       http.request(req)
     end
   end

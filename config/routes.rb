@@ -13,8 +13,11 @@ DiscourseSparkloc::Engine.routes.draw do
   # OAuth app management proxy (user-facing, Bearer token auth)
   get    "/apps"                  => "apps#index"
   post   "/apps"                  => "apps#create"
+  put    "/apps/:id"              => "apps#update"
   delete "/apps/:id"              => "apps#destroy"
   post   "/apps/:id/reset-secret" => "apps#reset_secret"
+  get    "/authorizations"              => "apps#authorizations"
+  post   "/authorizations/:id/revoke"   => "apps#revoke_authorization"
 end
 
 # Mount engine at /sparkloc
