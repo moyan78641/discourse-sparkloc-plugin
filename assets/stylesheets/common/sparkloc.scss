@@ -4,23 +4,14 @@
 .upgrade-progress-panel {
   padding: 10px 12px;
 
-  h3 {
-    margin: 0 0 8px;
-    font-size: 1em;
-  }
-
-  h4 {
-    margin: 12px 0 4px;
-    font-size: 0.9em;
-    color: var(--primary-medium);
-  }
+  h3 { margin: 0 0 8px; font-size: 1em; }
+  h4 { margin: 12px 0 4px; font-size: 0.9em; color: var(--primary-medium); }
 
   .upgrade-progress-bar {
     background: var(--primary-low);
     border-radius: 4px;
     height: 8px;
     overflow: hidden;
-
     .progress {
       background: var(--tertiary);
       height: 100%;
@@ -30,33 +21,42 @@
   }
 
   .req-list {
-    list-style: none;
-    margin: 4px 0;
-    padding: 0;
-
-    li {
-      padding: 2px 0;
-      font-size: 0.85em;
-      color: var(--danger);
-
-      &::before {
-        content: "✗ ";
-      }
-    }
-
-    &.met li {
-      color: var(--success);
-
-      &::before {
-        content: "✓ ";
-      }
-    }
+    list-style: none; margin: 4px 0; padding: 0;
+    li { padding: 2px 0; font-size: 0.85em; color: var(--danger); &::before { content: "✗ "; } }
+    &.met li { color: var(--success); &::before { content: "✓ "; } }
   }
 
-  .loading-text,
-  .error-text {
-    color: var(--primary-medium);
-    font-size: 0.9em;
+  .loading-text, .error-text { color: var(--primary-medium); font-size: 0.9em; }
+}
+
+// ========================================
+// Custom Modal (replaces native confirm)
+// ========================================
+.sparkloc-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.sparkloc-modal {
+  background: var(--secondary);
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+
+  p { margin: 0 0 20px; font-size: 1em; line-height: 1.5; }
+
+  .sparkloc-modal-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
   }
 }
 
@@ -68,9 +68,7 @@
   margin: 0 auto;
   padding: 20px;
 
-  h2 {
-    margin-bottom: 20px;
-  }
+  h2 { margin-bottom: 20px; }
 }
 
 .merchants-grid {
@@ -84,78 +82,32 @@
   height: 220px;
 
   .merchant-card-inner {
-    position: relative;
-    width: 100%;
-    height: 100%;
+    position: relative; width: 100%; height: 100%;
     transition: transform 0.5s;
     transform-style: preserve-3d;
   }
+  &:hover .merchant-card-inner { transform: rotateY(180deg); }
 
-  &:hover .merchant-card-inner {
-    transform: rotateY(180deg);
-  }
-
-  .merchant-card-front,
-  .merchant-card-back {
-    position: absolute;
-    width: 100%;
-    height: 100%;
+  .merchant-card-front, .merchant-card-back {
+    position: absolute; width: 100%; height: 100%;
     backface-visibility: hidden;
     border: 1px solid var(--primary-low);
     border-radius: 8px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 16px;
-    box-sizing: border-box;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 16px; box-sizing: border-box;
     background: var(--secondary);
   }
-
-  .merchant-card-back {
-    transform: rotateY(180deg);
-  }
-
-  .merchant-logo {
-    max-width: 120px;
-    max-height: 120px;
-    object-fit: contain;
-  }
-
-  .merchant-logo-placeholder {
-    font-size: 1.2em;
-    font-weight: bold;
-    color: var(--primary-medium);
-    text-align: center;
-  }
-
-  .merchant-name {
-    margin: 0 0 8px;
-    font-size: 1.1em;
-  }
-
-  .merchant-desc {
-    font-size: 0.85em;
-    color: var(--primary-medium);
-    text-align: center;
-    margin: 0 0 8px;
-  }
-
-  .merchant-link {
-    font-size: 0.85em;
-    margin: 2px 0;
-  }
-
-  .merchant-admin-actions {
-    margin-top: 8px;
-    display: flex;
-    gap: 4px;
-  }
+  .merchant-card-back { transform: rotateY(180deg); }
+  .merchant-logo { max-width: 120px; max-height: 120px; object-fit: contain; }
+  .merchant-logo-placeholder { font-size: 1.2em; font-weight: bold; color: var(--primary-medium); text-align: center; }
+  .merchant-name { margin: 0 0 8px; font-size: 1.1em; }
+  .merchant-desc { font-size: 0.85em; color: var(--primary-medium); text-align: center; margin: 0 0 8px; }
+  .merchant-link { font-size: 0.85em; margin: 2px 0; }
+  .merchant-admin-actions { margin-top: 8px; display: flex; gap: 4px; }
 }
 
-.merchant-admin-bar {
-  margin-bottom: 16px;
-}
+.merchant-admin-bar { margin-bottom: 16px; }
 
 .merchant-form {
   background: var(--primary-very-low);
@@ -163,88 +115,51 @@
   padding: 16px;
   margin-bottom: 20px;
 
-  h3 {
-    margin: 0 0 12px;
-  }
+  h3 { margin: 0 0 12px; }
 
   .form-row {
     margin-bottom: 12px;
-
-    label {
-      display: block;
-      font-weight: bold;
-      margin-bottom: 4px;
-    }
-
-    input, textarea {
-      width: 100%;
-      max-width: 500px;
-    }
+    label { display: block; font-weight: bold; margin-bottom: 4px; }
+    input, textarea { width: 100%; max-width: 500px; }
   }
-
-  .form-actions {
-    display: flex;
-    gap: 8px;
-  }
+  .form-actions { display: flex; gap: 8px; }
 }
 
 // ========================================
-// OAuth Apps Page (/oauth-apps)
+// OAuth Apps Page (/oauth-apps) — Card Layout
 // ========================================
 .sparkloc-oauth-apps-page {
   max-width: 900px;
   margin: 0 auto;
   padding: 20px;
 
-  h2 {
-    margin-bottom: 8px;
-  }
-
-  .oauth-apps-desc {
-    color: var(--primary-medium);
-    margin-bottom: 16px;
-  }
+  h2 { margin-bottom: 8px; }
 }
 
 .oauth-credential-notice {
   background: var(--success-low);
   border: 1px solid var(--success-medium);
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 16px;
   margin-bottom: 16px;
 
-  h3 {
-    margin: 0 0 8px;
-  }
-
-  .warning-text {
-    color: var(--danger);
-    font-weight: bold;
-    margin-bottom: 12px;
-  }
+  h3 { margin: 0 0 12px; }
 
   .credential-row {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
   }
-
-  .credential-label {
-    font-weight: bold;
-    min-width: 100px;
-  }
-
+  .credential-label { font-weight: bold; min-width: 90px; }
   .credential-value {
     background: var(--primary-very-low);
     padding: 4px 8px;
     border-radius: 4px;
     word-break: break-all;
-    font-size: 0.9em;
-
-    &.secret {
-      color: var(--danger);
-    }
+    font-size: 0.85em;
+    &.secret { color: var(--danger); }
   }
 }
 
@@ -257,96 +172,111 @@
   margin-bottom: 12px;
 }
 
-.oauth-actions-bar {
-  margin-bottom: 16px;
-}
+.oauth-actions-bar { margin-bottom: 16px; }
 
 .oauth-create-form {
   background: var(--primary-very-low);
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 16px;
   margin-bottom: 16px;
 
   .form-row {
     margin-bottom: 12px;
-
-    label {
-      display: block;
-      font-weight: bold;
-      margin-bottom: 4px;
-    }
-
-    input {
-      width: 100%;
-      max-width: 500px;
-    }
+    label { display: block; font-weight: bold; margin-bottom: 4px; }
+    input { width: 100%; max-width: 500px; }
   }
 }
 
-.oauth-apps-table {
-  width: 100%;
-  border-collapse: collapse;
+// Card-based app list (responsive)
+.oauth-apps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   margin-top: 16px;
+}
 
-  th, td {
-    padding: 8px 12px;
-    text-align: left;
-    border-bottom: 1px solid var(--primary-low);
-  }
+.oauth-app-card {
+  background: var(--secondary);
+  border: 1px solid var(--primary-low);
+  border-radius: 8px;
+  padding: 16px;
 
-  th {
-    font-weight: bold;
+  &.editing {
     background: var(--primary-very-low);
-  }
-
-  code {
-    font-size: 0.85em;
-    background: var(--primary-very-low);
-    padding: 2px 4px;
-    border-radius: 3px;
-  }
-
-  .redirect-uri-cell {
-    max-width: 200px;
-    word-break: break-all;
-    font-size: 0.9em;
-  }
-
-  .actions-cell {
-    white-space: nowrap;
-
-    .btn + .btn {
-      margin-left: 4px;
+    .form-row {
+      margin-bottom: 10px;
+      label { display: block; font-weight: bold; margin-bottom: 4px; font-size: 0.85em; }
+      input { width: 100%; }
     }
   }
 
-  .secret-cell {
-    white-space: nowrap;
+  &.auth-card { padding: 12px 16px; }
+
+  .app-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    gap: 4px;
+
+    h3 { margin: 0; font-size: 1.05em; }
+    .app-created { font-size: 0.8em; color: var(--primary-medium); }
+  }
+
+  .app-card-field {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+
+    .field-label {
+      font-size: 0.8em;
+      font-weight: bold;
+      color: var(--primary-medium);
+      min-width: 80px;
+    }
 
     code {
-      vertical-align: middle;
+      font-size: 0.82em;
+      background: var(--primary-very-low);
+      padding: 2px 6px;
+      border-radius: 3px;
+      word-break: break-all;
     }
 
-    .secret-toggle {
-      margin-left: 4px;
-      padding: 2px 6px;
-      font-size: 0.85em;
-      cursor: pointer;
-      vertical-align: middle;
+    .field-value {
+      font-size: 0.9em;
+      word-break: break-all;
     }
 
     .secret-masked {
       color: var(--primary-medium);
-      letter-spacing: 2px;
+      letter-spacing: 1px;
     }
+
+    .secret-toggle, .copy-btn {
+      padding: 2px 6px;
+      font-size: 0.82em;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+  }
+
+  .card-actions {
+    margin-top: 10px;
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
   }
 }
 
-.no-apps-text {
-  color: var(--primary-medium);
-  margin-top: 20px;
+.copy-btn {
+  padding: 2px 6px;
+  font-size: 0.82em;
+  cursor: pointer;
 }
-
 
 .section-title {
   margin-top: 40px;
@@ -354,7 +284,51 @@
   border-top: 1px solid var(--primary-low);
 }
 
-.loading-text,
-.no-data-text {
+.no-apps-text, .loading-text, .no-data-text {
   color: var(--primary-medium);
+  margin-top: 20px;
+}
+
+// ========================================
+// Mobile responsive
+// ========================================
+@media (max-width: 600px) {
+  .sparkloc-oauth-apps-page {
+    padding: 12px;
+  }
+
+  .oauth-app-card {
+    padding: 12px;
+
+    .app-card-field {
+      .field-label { min-width: 100%; }
+    }
+
+    .card-actions {
+      .btn { flex: 1; text-align: center; }
+    }
+  }
+
+  .oauth-credential-notice {
+    padding: 12px;
+    .credential-row { flex-direction: column; align-items: flex-start; gap: 4px; }
+    .credential-label { min-width: auto; }
+  }
+
+  .oauth-create-form {
+    padding: 12px;
+    .form-row input { max-width: 100%; }
+  }
+
+  .sparkloc-merchants-page { padding: 12px; }
+
+  .merchants-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+  }
+
+  .merchant-form {
+    padding: 12px;
+    .form-row input, .form-row textarea { max-width: 100%; }
+  }
 }

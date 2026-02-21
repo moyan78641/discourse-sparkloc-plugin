@@ -16,6 +16,7 @@ module ::DiscourseSparkloc
     # Returns 302 redirect to Discourse SSO
     def auth
       resp = proxy_get("/oauth2/auth?#{request.query_string}")
+      passthrough_cookies(resp)
       handle_redirect_or_passthrough(resp)
     end
 

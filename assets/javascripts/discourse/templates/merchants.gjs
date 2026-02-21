@@ -24,6 +24,9 @@ class MerchantsPage extends Component {
   @tracked formError = null;
   @tracked saving = false;
 
+  @tracked confirmAction = null;
+  @tracked confirmMessage = "";
+
   constructor() {
     super(...arguments);
     this.loadData();
@@ -116,8 +119,23 @@ class MerchantsPage extends Component {
     }
   }
 
-  @action async deleteMerchant(id) {
-    if (!confirm("确定删除此商家？")) return;
+  @action requestDelete(id) {
+    this.confirmMessage = "确定删除此商家？";
+    this.confirmAction = () => this.doDelete(id);
+  }
+
+  @action cancelConfirm() { this.confirmAction = null; this.confirmMessage = ""; }
+
+  @action async runConfirm() {
+    if (this.confirmAction) {
+      const fn = this.confirmAction;
+      this.confirmAction = null;
+      this.confirmMessage = "";
+      await fn();
+    }
+  }
+
+  async doDelete(id) {
     try {
       await ajax(`/sparkloc/admin/merchants/${id}.json`, { type: "DELETE" });
       this.loading = true;
@@ -129,6 +147,19 @@ class MerchantsPage extends Component {
 
   <template>
     <div class="sparkloc-merchants-page">
+
+      {{#if this.confirmAction}}
+        <div class="sparkloc-modal-overlay" {{on "click" this.cancelConfirm}} role="dialog">
+          <div class="sparkloc-modal">
+            <p>{{this.confirmMessage}}</p>
+            <div class="sparkloc-modal-actions">
+              <button class="btn btn-danger" type="button" {{on "click" this.runConfirm}}>确定</button>
+              <button class="btn btn-default" type="button" {{on "click" this.cancelConfirm}}>取消</button>
+            </div>
+          </div>
+        </div>
+      {{/if}}
+
       <h2>认证商家</h2>
 
       {{#if this.isAdmin}}
@@ -207,7 +238,7 @@ class MerchantsPage extends Component {
                   {{#if this.isAdmin}}
                     <div class="merchant-admin-actions">
                       <button class="btn btn-default btn-small" type="button" {{on "click" (fn this.showEditForm merchant)}}>编辑</button>
-                      <button class="btn btn-danger btn-small" type="button" {{on "click" (fn this.deleteMerchant merchant.id)}}>删除</button>
+                      <button class="btn btn-danger btn-small" type="button" {{on "click" (fn this.requestDelete merchant.id)}}>删除</button>
                     </div>
                   {{/if}}
                 </div>

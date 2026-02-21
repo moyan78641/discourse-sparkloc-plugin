@@ -21,6 +21,9 @@ class OauthAppsPage extends Component {
   @tracked editName = "";
   @tracked editRedirectUris = "";
   @tracked visibleSecretId = null;
+  @tracked confirmAction = null;
+  @tracked confirmMessage = "";
+  @tracked copyFeedback = null;
 
   constructor() {
     super(...arguments);
@@ -67,9 +70,7 @@ class OauthAppsPage extends Component {
     this.error = null;
   }
 
-  @action cancelEdit() {
-    this.editingAppId = null;
-  }
+  @action cancelEdit() { this.editingAppId = null; }
 
   @action async saveEdit(appId) {
     this.error = null;
@@ -111,8 +112,28 @@ class OauthAppsPage extends Component {
     }
   }
 
-  @action async deleteApp(appId) {
-    if (!confirm("确定删除此应用？")) return;
+  @action requestDelete(appId) {
+    this.confirmMessage = "确定删除此应用？删除后不可恢复。";
+    this.confirmAction = () => this.doDelete(appId);
+  }
+
+  @action requestReset(appId) {
+    this.confirmMessage = "确定重置密钥？旧密钥将立即失效。";
+    this.confirmAction = () => this.doReset(appId);
+  }
+
+  @action cancelConfirm() { this.confirmAction = null; this.confirmMessage = ""; }
+
+  @action async runConfirm() {
+    if (this.confirmAction) {
+      const fn = this.confirmAction;
+      this.confirmAction = null;
+      this.confirmMessage = "";
+      await fn();
+    }
+  }
+
+  async doDelete(appId) {
     try {
       await ajax(`/sparkloc/apps/${appId}.json`, { type: "DELETE" });
       this.createdApp = null;
@@ -122,8 +143,7 @@ class OauthAppsPage extends Component {
     }
   }
 
-  @action async resetSecret(appId) {
-    if (!confirm("确定重置密钥？旧密钥将立即失效。")) return;
+  async doReset(appId) {
     try {
       const result = await ajax(`/sparkloc/apps/${appId}/reset-secret.json`, { type: "POST" });
       this.resetResult = result;
@@ -137,6 +157,14 @@ class OauthAppsPage extends Component {
     this.visibleSecretId = this.visibleSecretId === appId ? null : appId;
   }
 
+  @action async copyText(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      this.copyFeedback = text;
+      setTimeout(() => { this.copyFeedback = null; }, 1500);
+    } catch (_) { /* ignore */ }
+  }
+
   get appsWithState() {
     return this.apps.map((app) => ({
       ...app,
@@ -148,19 +176,33 @@ class OauthAppsPage extends Component {
   <template>
     <div class="sparkloc-oauth-apps-page">
 
+      {{!-- 自定义确认弹窗 --}}
+      {{#if this.confirmAction}}
+        <div class="sparkloc-modal-overlay" {{on "click" this.cancelConfirm}} role="dialog">
+          <div class="sparkloc-modal" {{on "click" this.stopProp}}>
+            <p>{{this.confirmMessage}}</p>
+            <div class="sparkloc-modal-actions">
+              <button class="btn btn-danger" type="button" {{on "click" this.runConfirm}}>确定</button>
+              <button class="btn btn-default" type="button" {{on "click" this.cancelConfirm}}>取消</button>
+            </div>
+          </div>
+        </div>
+      {{/if}}
+
       <h2>我的应用</h2>
 
       {{#if this.createdApp}}
         <div class="oauth-credential-notice">
-          <h3>应用创建成功</h3>
-          <p class="warning-text">请立即保存 Client Secret，关闭后将无法再次查看。</p>
+          <h3>✅ 应用创建成功</h3>
           <div class="credential-row">
             <span class="credential-label">Client ID</span>
             <code class="credential-value">{{this.createdApp.client_id}}</code>
+            <button class="btn btn-flat btn-small copy-btn" type="button" {{on "click" (fn this.copyText this.createdApp.client_id)}}>📋</button>
           </div>
           <div class="credential-row">
             <span class="credential-label">Client Secret</span>
             <code class="credential-value secret">{{this.createdApp.client_secret}}</code>
+            <button class="btn btn-flat btn-small copy-btn" type="button" {{on "click" (fn this.copyText this.createdApp.client_secret)}}>📋</button>
           </div>
           <button class="btn btn-default" type="button" {{on "click" this.dismissCreated}}>知道了</button>
         </div>
@@ -168,15 +210,16 @@ class OauthAppsPage extends Component {
 
       {{#if this.resetResult}}
         <div class="oauth-credential-notice">
-          <h3>密钥已重置</h3>
-          <p class="warning-text">请立即保存新的 Client Secret，关闭后将无法再次查看。</p>
+          <h3>✅ 密钥已重置</h3>
           <div class="credential-row">
             <span class="credential-label">Client ID</span>
             <code class="credential-value">{{this.resetResult.client_id}}</code>
+            <button class="btn btn-flat btn-small copy-btn" type="button" {{on "click" (fn this.copyText this.resetResult.client_id)}}>📋</button>
           </div>
           <div class="credential-row">
             <span class="credential-label">新 Secret</span>
             <code class="credential-value secret">{{this.resetResult.client_secret}}</code>
+            <button class="btn btn-flat btn-small copy-btn" type="button" {{on "click" (fn this.copyText this.resetResult.client_secret)}}>📋</button>
           </div>
           <button class="btn btn-default" type="button" {{on "click" this.dismissReset}}>知道了</button>
         </div>
@@ -209,57 +252,61 @@ class OauthAppsPage extends Component {
       {{#if this.loadingApps}}
         <p class="loading-text">加载中...</p>
       {{else if this.apps.length}}
-        <table class="oauth-apps-table">
-          <thead>
-            <tr>
-              <th>名称</th>
-              <th>Client ID</th>
-              <th>Client Secret</th>
-              <th>回调地址</th>
-              <th>创建时间</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            {{#each this.appsWithState as |app|}}
-              {{#if app.isEditing}}
-                <tr class="editing-row">
-                  <td><input type="text" value={{this.editName}} {{on "input" this.updateEditName}} /></td>
-                  <td><code>{{app.client_id}}</code></td>
-                  <td><code class="secret-masked">••••••••</code></td>
-                  <td><input type="text" value={{this.editRedirectUris}} {{on "input" this.updateEditRedirectUris}} /></td>
-                  <td>{{app.created_at}}</td>
-                  <td class="actions-cell">
-                    <button class="btn btn-primary btn-small" type="button" {{on "click" (fn this.saveEdit app.id)}}>保存</button>
-                    <button class="btn btn-default btn-small" type="button" {{on "click" this.cancelEdit}}>取消</button>
-                  </td>
-                </tr>
-              {{else}}
-                <tr>
-                  <td>{{app.name}}</td>
-                  <td><code>{{app.client_id}}</code></td>
-                  <td class="secret-cell">
-                    {{#if app.isSecretVisible}}
-                      <code>{{app.client_secret}}</code>
-                    {{else}}
-                      <code class="secret-masked">••••••••••••</code>
-                    {{/if}}
-                    <button class="btn btn-flat btn-icon btn-small secret-toggle" type="button" {{on "click" (fn this.toggleSecret app.id)}} title="显示/隐藏密钥">
-                      {{#if app.isSecretVisible}}🙈{{else}}👁{{/if}}
-                    </button>
-                  </td>
-                  <td class="redirect-uri-cell">{{app.redirect_uris}}</td>
-                  <td>{{app.created_at}}</td>
-                  <td class="actions-cell">
-                    <button class="btn btn-default btn-small" type="button" {{on "click" (fn this.startEdit app)}}>编辑</button>
-                    <button class="btn btn-default btn-small" type="button" {{on "click" (fn this.resetSecret app.id)}}>重置密钥</button>
-                    <button class="btn btn-danger btn-small" type="button" {{on "click" (fn this.deleteApp app.id)}}>删除</button>
-                  </td>
-                </tr>
-              {{/if}}
-            {{/each}}
-          </tbody>
-        </table>
+        <div class="oauth-apps-list">
+          {{#each this.appsWithState as |app|}}
+            {{#if app.isEditing}}
+              <div class="oauth-app-card editing">
+                <div class="form-row">
+                  <label>名称</label>
+                  <input type="text" value={{this.editName}} {{on "input" this.updateEditName}} />
+                </div>
+                <div class="form-row">
+                  <label>回调地址</label>
+                  <input type="text" value={{this.editRedirectUris}} {{on "input" this.updateEditRedirectUris}} />
+                </div>
+                <div class="card-actions">
+                  <button class="btn btn-primary btn-small" type="button" {{on "click" (fn this.saveEdit app.id)}}>保存</button>
+                  <button class="btn btn-default btn-small" type="button" {{on "click" this.cancelEdit}}>取消</button>
+                </div>
+              </div>
+            {{else}}
+              <div class="oauth-app-card">
+                <div class="app-card-header">
+                  <h3>{{app.name}}</h3>
+                  <span class="app-created">{{app.created_at}}</span>
+                </div>
+                <div class="app-card-field">
+                  <span class="field-label">Client ID</span>
+                  <code>{{app.client_id}}</code>
+                  <button class="btn btn-flat btn-small copy-btn" type="button" {{on "click" (fn this.copyText app.client_id)}} title="复制">📋</button>
+                </div>
+                <div class="app-card-field">
+                  <span class="field-label">Client Secret</span>
+                  {{#if app.isSecretVisible}}
+                    <code>{{app.client_secret}}</code>
+                  {{else}}
+                    <code class="secret-masked">••••••••••••••••</code>
+                  {{/if}}
+                  <button class="btn btn-flat btn-small secret-toggle" type="button" {{on "click" (fn this.toggleSecret app.id)}} title="显示/隐藏">
+                    {{#if app.isSecretVisible}}🙈{{else}}👁{{/if}}
+                  </button>
+                  {{#if app.isSecretVisible}}
+                    <button class="btn btn-flat btn-small copy-btn" type="button" {{on "click" (fn this.copyText app.client_secret)}} title="复制">📋</button>
+                  {{/if}}
+                </div>
+                <div class="app-card-field">
+                  <span class="field-label">回调地址</span>
+                  <span class="field-value">{{app.redirect_uris}}</span>
+                </div>
+                <div class="card-actions">
+                  <button class="btn btn-default btn-small" type="button" {{on "click" (fn this.startEdit app)}}>编辑</button>
+                  <button class="btn btn-default btn-small" type="button" {{on "click" (fn this.requestReset app.id)}}>重置密钥</button>
+                  <button class="btn btn-danger btn-small" type="button" {{on "click" (fn this.requestDelete app.id)}}>删除</button>
+                </div>
+              </div>
+            {{/if}}
+          {{/each}}
+        </div>
       {{else}}
         <p class="no-apps-text">您还没有创建应用。</p>
       {{/if}}
@@ -269,24 +316,20 @@ class OauthAppsPage extends Component {
       {{#if this.loadingAuths}}
         <p class="loading-text">加载中...</p>
       {{else if this.authorizations.length}}
-        <table class="oauth-apps-table">
-          <thead>
-            <tr>
-              <th>应用名称</th>
-              <th>授权时间</th>
-              <th>状态</th>
-            </tr>
-          </thead>
-          <tbody>
-            {{#each this.authorizations as |auth|}}
-              <tr>
-                <td>{{auth.app_name}}</td>
-                <td>{{auth.created_at}}</td>
-                <td>{{auth.statusText}}</td>
-              </tr>
-            {{/each}}
-          </tbody>
-        </table>
+        <div class="oauth-apps-list">
+          {{#each this.authorizations as |auth|}}
+            <div class="oauth-app-card auth-card">
+              <div class="app-card-header">
+                <h3>{{auth.app_name}}</h3>
+                <span class="app-created">{{auth.created_at}}</span>
+              </div>
+              <div class="app-card-field">
+                <span class="field-label">状态</span>
+                <span class="field-value">{{auth.statusText}}</span>
+              </div>
+            </div>
+          {{/each}}
+        </div>
       {{else}}
         <p class="no-apps-text">暂无已授权的应用。</p>
       {{/if}}
