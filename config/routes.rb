@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Engine routes (upgrade progress, merchants JSON, app management proxy)
+# Engine routes (upgrade progress, merchants JSON, app management proxy, creem)
 DiscourseSparkloc::Engine.routes.draw do
   get "/upgrade-progress" => "upgrade_progress#index"
   get "/merchants" => "merchants#index"
@@ -18,6 +18,13 @@ DiscourseSparkloc::Engine.routes.draw do
   post   "/apps/:id/reset-secret" => "apps#reset_secret"
   get    "/authorizations"              => "apps#authorizations"
   post   "/authorizations/:id/revoke"   => "apps#revoke_authorization"
+
+  # Creem subscription
+  post "/webhooks/creem"      => "creem_webhook#handle"
+  post "/creem/checkout"      => "creem#create_checkout"
+  get  "/creem/subscription"  => "creem#subscription_status"
+  post "/creem/cancel"        => "creem#cancel_subscription"
+  post "/creem/billing-portal" => "creem#billing_portal"
 end
 
 # Mount engine at /sparkloc
@@ -31,6 +38,10 @@ Discourse::Application.routes.draw do
   # These render the Ember app; Ember router then takes over client-side.
   get "/merchants" => "list#latest"
   get "/oauth-apps" => "list#latest"
+
+  # User billing tab — Ember shell for direct URL access
+  get "/u/:username/billing" => "users#show"
+  get "/u/:username/billing/subscriptions" => "users#show"
 end
 
 # OAuth2 proxy routes — directly on root, no engine prefix

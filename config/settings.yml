@@ -9,3 +9,23 @@ plugins:
     default: ""
     client: false
     secret: true
+  sparkloc_creem_enabled:
+    default: false
+    client: true
+  sparkloc_creem_api_key:
+    default: ""
+    client: false
+    secret: true
+  sparkloc_creem_webhook_secret:
+    default: ""
+    client: false
+    secret: true
+  sparkloc_creem_product_id:
+    default: ""
+    client: false
+  sparkloc_creem_group_name:
+    default: "vip"
+    client: false
+  sparkloc_creem_test_mode:
+    default: false
+    client: false

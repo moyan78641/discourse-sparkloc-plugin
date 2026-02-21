@@ -162,6 +162,17 @@ class MerchantsPage extends Component {
 
       <h2>认证商家</h2>
 
+      <div class="sparkloc-guide-box compact">
+        <svg class="fa d-icon svg-icon svg-string" xmlns="http://www.w3.org/2000/svg"><use href="#info-circle"></use></svg>
+        <div class="guide-content">
+          <p>{{i18n "sparkloc.merchants.guide_desc"}}</p>
+          <a href="https://sparkloc.com/t/topic/32" target="_blank" rel="noopener noreferrer" class="btn btn-small btn-default">
+            {{i18n "sparkloc.merchants.guide_btn"}}
+            <svg class="fa d-icon svg-icon svg-string" xmlns="http://www.w3.org/2000/svg"><use href="#external-link-alt"></use></svg>
+          </a>
+        </div>
+      </div>
+
       {{#if this.isAdmin}}
         <div class="merchant-admin-bar">
           <button class="btn btn-primary" type="button" {{on "click" this.showAddForm}}>＋ 添加商家</button>

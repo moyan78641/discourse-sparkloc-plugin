@@ -19,4 +19,8 @@ register_asset "stylesheets/common/sparkloc.scss"
 after_initialize do
   register_svg_icon "arrow-up"
   register_svg_icon "certificate"
+  register_svg_icon "credit-card"
+  register_svg_icon "book"
+  register_svg_icon "info-circle"
+  register_svg_icon "external-link-alt"
 end

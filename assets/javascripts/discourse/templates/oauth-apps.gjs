@@ -191,6 +191,18 @@ class OauthAppsPage extends Component {
 
       <h2>我的应用</h2>
 
+      <div class="sparkloc-guide-box">
+        <svg class="fa d-icon svg-icon svg-string" xmlns="http://www.w3.org/2000/svg"><use href="#book"></use></svg>
+        <div class="guide-content">
+          <h3>{{i18n "sparkloc.oauth_apps.guide_title"}}</h3>
+          <p>{{i18n "sparkloc.oauth_apps.guide_desc"}}</p>
+          <a href="https://sparkloc.com/t/topic/39" target="_blank" rel="noopener noreferrer" class="btn btn-default">
+            {{i18n "sparkloc.oauth_apps.guide_btn"}}
+            <svg class="fa d-icon svg-icon svg-string" xmlns="http://www.w3.org/2000/svg"><use href="#external-link-alt"></use></svg>
+          </a>
+        </div>
+      </div>
+
       {{#if this.createdApp}}
         <div class="oauth-credential-notice">
           <h3>✅ 应用创建成功</h3>
