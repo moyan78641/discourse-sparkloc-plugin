@@ -6,6 +6,7 @@ import { on } from "@ember/modifier";
 import { fn } from "@ember/helper";
 import { ajax } from "discourse/lib/ajax";
 import { inject as service } from "@ember/service";
+import { i18n } from "discourse-i18n";
 
 class MerchantsPage extends Component {
   @service currentUser;

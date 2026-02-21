@@ -5,6 +5,7 @@ import { action } from "@ember/object";
 import { on } from "@ember/modifier";
 import { fn } from "@ember/helper";
 import { ajax } from "discourse/lib/ajax";
+import { i18n } from "discourse-i18n";
 
 class OauthAppsPage extends Component {
   @tracked apps = [];
