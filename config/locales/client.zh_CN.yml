@@ -1,5 +1,8 @@
 zh_CN:
   js:
+    user_menu:
+      tabs:
+        upgrade_progress: "升级进度"
     sparkloc:
       upgrade_progress:
         title: "升级进度"

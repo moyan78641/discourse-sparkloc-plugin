@@ -1,5 +1,8 @@
 en:
   js:
+    user_menu:
+      tabs:
+        upgrade_progress: "Upgrade Progress"
     sparkloc:
       upgrade_progress:
         title: "Upgrade Progress"
