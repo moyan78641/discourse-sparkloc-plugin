@@ -1,0 +1,16 @@
+zh_CN:
+  js:
+    sparkloc:
+      upgrade_progress:
+        title: "升级进度"
+        next_level: "下一等级"
+        progress: "进度"
+        met: "已满足条件"
+        unmet: "未满足条件"
+        max_level: "已达最高等级"
+        loading: "加载中..."
+        error: "无法加载升级进度"
+      merchants:
+        title: "认证商家"
+        website: "官网"
+        discourse_user: "论坛主页"

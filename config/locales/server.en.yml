@@ -1,0 +1,5 @@
+en:
+  site_settings:
+    sparkloc_enabled: "Enable Sparkloc plugin (OAuth2 proxy, upgrade progress, certified merchants)"
+    sparkloc_backend_url: "Rust backend URL (default http://127.0.0.1:3000)"
+    sparkloc_internal_api_key: "Internal API Key (for admin merchant operations)"

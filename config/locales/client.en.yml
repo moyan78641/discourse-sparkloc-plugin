@@ -1,0 +1,16 @@
+en:
+  js:
+    sparkloc:
+      upgrade_progress:
+        title: "Upgrade Progress"
+        next_level: "Next Level"
+        progress: "Progress"
+        met: "Met"
+        unmet: "Not Met"
+        max_level: "Max Level Reached"
+        loading: "Loading..."
+        error: "Failed to load upgrade progress"
+      merchants:
+        title: "Certified Merchants"
+        website: "Website"
+        discourse_user: "Forum Profile"

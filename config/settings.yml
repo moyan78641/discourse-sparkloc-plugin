@@ -1,0 +1,11 @@
+plugins:
+  sparkloc_enabled:
+    default: true
+    client: true
+  sparkloc_backend_url:
+    default: "http://172.17.0.1:8995"
+    client: false
+  sparkloc_internal_api_key:
+    default: ""
+    client: false
+    secret: true
