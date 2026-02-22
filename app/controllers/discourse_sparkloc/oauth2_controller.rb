@@ -277,9 +277,23 @@ module ::DiscourseSparkloc
 
       cached = Rails.cache.read("userinfo::#{claims["sub"]}")
       if cached
-        render json: cached
+        subject = (cached[:id] || cached["id"] || claims["sub"]).to_s
+        uname = cached[:username] || cached["username"]
+        render json: {
+          id: subject,
+          sub: subject,
+          username: uname,
+          preferred_username: uname,
+          name: cached[:name] || cached["name"],
+          email: cached[:email] || cached["email"],
+          email_verified: true,
+          avatar_url: cached[:avatar_url] || cached["avatar_url"],
+          picture: cached[:avatar_url] || cached["avatar_url"],
+          trust_level: cached[:trust_level] || cached["trust_level"],
+          active: true,
+        }.compact
       else
-        render json: { id: claims["sub"], active: true }
+        render json: { id: claims["sub"].to_s, sub: claims["sub"].to_s, active: true }
       end
     end
 
