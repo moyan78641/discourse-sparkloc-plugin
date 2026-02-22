@@ -28,9 +28,10 @@ after_initialize do
   register_svg_icon "dice"
 
   # Load ActiveRecord models
+  plugin_root = File.dirname(__FILE__)
   %w[
-    ../app/models/sparkloc_oauth_app
-    ../app/models/sparkloc_authorization
-    ../app/models/sparkloc_lottery_record
-  ].each { |path| require_relative path }
+    sparkloc_oauth_app
+    sparkloc_authorization
+    sparkloc_lottery_record
+  ].each { |m| require File.join(plugin_root, "app", "models", m) }
 end
