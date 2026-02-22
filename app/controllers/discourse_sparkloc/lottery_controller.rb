@@ -8,7 +8,6 @@ module ::DiscourseSparkloc
     before_action :ensure_logged_in
 
     # GET /sparkloc/lottery/topics.json
-    # 获取当前用户符合条件的话题（已关闭/存档 + 抽奖标签）
     def topics
       topics = Topic.joins(:tags)
                     .where(user_id: current_user.id)
@@ -17,8 +16,7 @@ module ::DiscourseSparkloc
                     .order(created_at: :desc)
                     .select(:id, :title, :closed, :archived, :created_at, :posts_count)
 
-      # 标记已抽奖的话题
-      drawn_topic_ids = drawn_topic_id_set
+      drawn_ids = SparklocLotteryRecord.pluck(:topic_id).to_set
 
       result = topics.map do |t|
         {
@@ -28,7 +26,7 @@ module ::DiscourseSparkloc
           archived: t.archived,
           posts_count: t.posts_count,
           created_at: t.created_at.strftime("%Y-%m-%d %H:%M"),
-          drawn: drawn_topic_ids.include?(t.id),
+          drawn: drawn_ids.include?(t.id),
         }
       end
 
@@ -51,10 +49,9 @@ module ::DiscourseSparkloc
       topic = find_user_topic(params[:topic_id])
       return render json: { error: "话题不存在或不符合条件" }, status: 400 unless topic
 
-      # 检查是否已抽过
-      existing = load_record(topic.id)
-      if existing
-        return render json: { error: "该话题已抽过奖", result: existing }, status: 400
+      if SparklocLotteryRecord.exists?(topic_id: topic.id)
+        existing = SparklocLotteryRecord.find_by(topic_id: topic.id)
+        return render json: { error: "该话题已抽过奖", result: serialize_record(existing) }, status: 400
       end
 
       winners_count = (params[:winners_count] || 1).to_i
@@ -66,74 +63,60 @@ module ::DiscourseSparkloc
 
       winners_count = [winners_count, posts.size].min
 
-      # 生成种子
       seed = generate_seed(topic, posts, winners_count)
-
-      # 抽奖
       winning_floors = pick_winners(seed, posts, winners_count)
 
-      # 构建中奖信息
       winners_info = winning_floors.map do |floor|
         post = posts.find { |p| p.post_number == floor }
-        { post_number: floor, username: post&.user&.username || "unknown" }
+        { "post_number" => floor, "username" => post&.user&.username || "unknown" }
       end
 
-      # 保存记录
-      record = {
-        "topic_id" => topic.id,
-        "topic_title" => topic.title,
-        "creator_id" => current_user.id,
-        "winners_count" => winners_count,
-        "last_floor" => last_floor,
-        "seed" => seed,
-        "winning_floors" => winning_floors,
-        "winners_info" => winners_info,
-        "valid_posts_count" => posts.size,
-        "created_at" => Time.now.strftime("%Y-%m-%d %H:%M:%S"),
-        "published" => false,
-      }
-      save_record(topic.id, record)
+      record = SparklocLotteryRecord.create!(
+        topic_id: topic.id,
+        topic_title: topic.title,
+        creator_id: current_user.id,
+        winners_count: winners_count,
+        last_floor: last_floor,
+        seed: seed,
+        winning_floors: winning_floors,
+        winners_info: winners_info,
+        valid_posts_count: posts.size,
+        published: false,
+      )
 
-      # 自动发布结果到帖子
       publish_result(topic, record)
 
-      render json: { ok: true, result: record }
+      render json: { ok: true, result: serialize_record(record) }
     end
 
     # GET /sparkloc/lottery/result.json?topic_id=xx
     def result
-      topic_id = params[:topic_id].to_i
-      record = load_record(topic_id)
+      record = SparklocLotteryRecord.find_by(topic_id: params[:topic_id].to_i)
       return render json: { error: "未找到抽奖记录" }, status: 404 unless record
 
-      # 只有作者或管理员可查看
-      unless record["creator_id"] == current_user.id || current_user.admin?
+      unless record.creator_id == current_user.id || current_user.admin?
         return render json: { error: "无权查看" }, status: 403
       end
 
-      render json: { result: record }
+      render json: { result: serialize_record(record) }
     end
 
     # GET /sparkloc/lottery/records.json
     def records
-      all_records = load_all_records
-      unless current_user.admin?
-        all_records = all_records.select { |r| r["creator_id"] == current_user.id }
-      end
-      all_records.sort_by! { |r| r["created_at"] || "" }.reverse!
+      scope = SparklocLotteryRecord.order(created_at: :desc)
+      scope = scope.where(creator_id: current_user.id) unless current_user.admin?
 
-      render json: { records: all_records }
+      render json: { records: scope.map { |r| serialize_record(r) } }
     end
 
     private
 
     def find_user_topic(topic_id)
-      topic = Topic.joins(:tags)
-                   .where(id: topic_id.to_i, user_id: current_user.id)
-                   .where("topics.closed = true OR topics.archived = true")
-                   .where(tags: { name: %w[抽奖 lottery] })
-                   .first
-      topic
+      Topic.joins(:tags)
+           .where(id: topic_id.to_i, user_id: current_user.id)
+           .where("topics.closed = true OR topics.archived = true")
+           .where(tags: { name: %w[抽奖 lottery] })
+           .first
     end
 
     def fetch_valid_posts(topic, last_floor)
@@ -146,7 +129,6 @@ module ::DiscourseSparkloc
 
       posts = posts.where("post_number <= ?", last_floor) if last_floor
 
-      # 每个用户只保留第一条回复
       seen = {}
       posts.select do |p|
         next false if seen[p.user_id]
@@ -155,7 +137,6 @@ module ::DiscourseSparkloc
       end
     end
 
-    # 种子生成 — 与 Go 版本完全一致
     def generate_seed(topic, valid_posts, winners_count)
       post_ids = valid_posts.map { |p| p.id.to_s }.join(",")
       post_numbers = valid_posts.map { |p| p.post_number.to_s }.join(",")
@@ -179,18 +160,14 @@ module ::DiscourseSparkloc
       Digest::SHA256.hexdigest(combined)
     end
 
-    # 抽奖选人 — 与 Go 版本一致的确定性算法
     def pick_winners(seed, valid_posts, winners_count)
-      # 将种子转为 int64（与 Go 一致）
       seed_int = 0
       seed.each_byte.with_index do |b, i|
         seed_int ^= b << (i % 56)
       end
-      seed_int &= 0x7FFFFFFFFFFFFFFF # 保持正数
+      seed_int &= 0x7FFFFFFFFFFFFFFF
 
-      # 使用与 Go rand 兼容的线性同余生成器
       rng = GoCompatRng.new(seed_int)
-
       available = valid_posts.map(&:post_number)
       winners = []
 
@@ -204,7 +181,6 @@ module ::DiscourseSparkloc
       winners
     end
 
-    # 发布抽奖结果到帖子
     def publish_result(topic, record)
       base_url = Discourse.base_url
       divider = "=" * 60
@@ -218,16 +194,16 @@ module ::DiscourseSparkloc
       content += "帖子作者: #{topic.user&.username}\n"
       content += "发帖时间: #{topic.created_at.strftime('%Y-%m-%d %H:%M:%S')}\n"
       content += "#{'—' * 60}\n"
-      content += "抽奖时间: #{record['created_at']}\n"
-      content += "有效用户: #{record['valid_posts_count']} 人\n"
-      content += "中奖数量: #{record['winners_count']} 个\n"
-      content += "截止楼层: #{record['last_floor'] || '全部'}\n"
-      content += "最终种子: #{record['seed']}\n"
+      content += "抽奖时间: #{record.created_at&.strftime('%Y-%m-%d %H:%M:%S')}\n"
+      content += "有效用户: #{record.valid_posts_count} 人\n"
+      content += "中奖数量: #{record.winners_count} 个\n"
+      content += "截止楼层: #{record.last_floor || '全部'}\n"
+      content += "最终种子: #{record.seed}\n"
       content += "#{'—' * 60}\n"
       content += "恭喜以下用户中奖:\n"
       content += "#{'—' * 60}\n"
 
-      record["winners_info"].each_with_index do |w, i|
+      record.winners_info.each_with_index do |w, i|
         floor_url = "#{base_url}/t/topic/#{topic.id}/#{w['post_number']}"
         content += "[#{(i + 1).to_s.center(4)}] #{w['post_number'].to_s.rjust(4)} 楼  @#{w['username']}  #{floor_url}\n"
       end
@@ -237,13 +213,11 @@ module ::DiscourseSparkloc
       content += "#{divider}\n"
       content += "```\n"
 
-      # 用系统用户或指定用户发帖
       poster = User.find_by(username: "lottery") || Discourse.system_user
       post = PostCreator.create!(poster, topic_id: topic.id, raw: content, skip_validations: true)
 
       if post&.persisted?
-        record["published"] = true
-        save_record(topic.id, record)
+        record.update!(published: true)
       end
     rescue => e
       Rails.logger.warn("Lottery publish failed: #{e.message}")
@@ -256,36 +230,23 @@ module ::DiscourseSparkloc
       (" " * left) + text
     end
 
-    # PluginStore helpers
-    def load_record(topic_id)
-      raw = PluginStore.get(PLUGIN_NAME, "lottery::#{topic_id}")
-      return nil if raw.nil?
-      raw.is_a?(String) ? JSON.parse(raw) : raw
-    rescue JSON::ParserError
-      nil
-    end
-
-    def save_record(topic_id, data)
-      PluginStore.set(PLUGIN_NAME, "lottery::#{topic_id}", data.to_json)
-    end
-
-    def load_all_records
-      PluginStoreRow.where(plugin_name: PLUGIN_NAME)
-                    .where("key LIKE 'lottery::%'")
-                    .filter_map do |r|
-        raw = r.value
-        raw.is_a?(String) ? JSON.parse(raw) : raw
-      rescue JSON::ParserError
-        nil
-      end
-    end
-
-    def drawn_topic_id_set
-      Set.new(load_all_records.map { |r| r["topic_id"] })
+    def serialize_record(record)
+      {
+        "topic_id" => record.topic_id,
+        "topic_title" => record.topic_title,
+        "creator_id" => record.creator_id,
+        "winners_count" => record.winners_count,
+        "last_floor" => record.last_floor,
+        "seed" => record.seed,
+        "winning_floors" => record.winning_floors,
+        "winners_info" => record.winners_info,
+        "valid_posts_count" => record.valid_posts_count,
+        "created_at" => record.created_at&.strftime("%Y-%m-%d %H:%M:%S"),
+        "published" => record.published,
+      }
     end
   end
 
-  # Go 兼容的随机数生成器（线性同余，与 Go math/rand 一致）
   class GoCompatRng
     def initialize(seed)
       @seed = seed & 0x7FFFFFFFFFFFFFFF
@@ -293,7 +254,6 @@ module ::DiscourseSparkloc
 
     def intn(n)
       return 0 if n <= 0
-      # 简化版：用种子做确定性选择
       @seed = (@seed * 6364136223846793005 + 1442695040888963407) & 0xFFFFFFFFFFFFFFFF
       ((@seed >> 33) % n).to_i
     end

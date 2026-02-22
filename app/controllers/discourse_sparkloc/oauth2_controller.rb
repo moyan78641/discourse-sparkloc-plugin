@@ -366,30 +366,25 @@ module ::DiscourseSparkloc
           "owner_discourse_id" => 0,
         }
       end
-      PluginStoreRow.where(plugin_name: PLUGIN_NAME)
-                    .where("key LIKE 'oauth2\\_app::%'")
-                    .where.not(key: "oauth2_app_next_id")
-                    .each do |r|
-        app = parse_record(r.value)
-        return app if app && app["client_id"] == client_id
-      end
-      nil
+      app = SparklocOauthApp.find_by(client_id: client_id)
+      return nil unless app
+      {
+        "client_id" => app.client_id,
+        "client_secret" => app.client_secret,
+        "name" => app.name,
+        "redirect_uris" => app.redirect_uris,
+        "owner_discourse_id" => app.owner_discourse_id,
+      }
     end
 
     def record_authorization(discourse_id, client_id, app_name, scope, status)
-      current = PluginStore.get(PLUGIN_NAME, "authorization_next_id").to_i
-      new_id = current + 1
-      PluginStore.set(PLUGIN_NAME, "authorization_next_id", new_id)
-      auth = {
-        "id" => new_id,
-        "discourse_id" => discourse_id,
-        "client_id" => client_id,
-        "app_name" => app_name,
-        "scope" => scope || "openid",
-        "status" => status,
-        "created_at" => Time.now.strftime("%Y-%m-%d %H:%M"),
-      }
-      PluginStore.set(PLUGIN_NAME, "authorization::#{new_id}", auth.to_json)
+      SparklocAuthorization.create!(
+        discourse_id: discourse_id,
+        client_id: client_id,
+        app_name: app_name || "",
+        scope: scope || "openid",
+        status: status,
+      )
     end
 
     def extract_client_credentials
@@ -409,12 +404,6 @@ module ::DiscourseSparkloc
       token.present? ? token : nil
     end
 
-    def parse_record(raw)
-      return nil if raw.nil?
-      raw.is_a?(String) ? JSON.parse(raw) : raw
-    rescue JSON::ParserError
-      nil
-    end
 
     def render_consent_page(user, app_name)
       avatar = user[:avatar_url].present? ? user[:avatar_url] : "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23ddd'/%3E%3C/svg%3E"

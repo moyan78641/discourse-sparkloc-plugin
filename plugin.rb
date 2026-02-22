@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 # name: discourse-sparkloc-plugin
-# about: Sparkloc OAuth2/OIDC Provider, upgrade progress, certified merchants, and billing
-# version: 0.2.0
+# about: Sparkloc OAuth2/OIDC Provider, upgrade progress, certified merchants, lottery and billing
+# version: 0.3.0
 # authors: Sparkloc
 # url: https://sparkloc.com
 
@@ -26,4 +26,11 @@ after_initialize do
   register_svg_icon "info-circle"
   register_svg_icon "external-link-alt"
   register_svg_icon "dice"
+
+  # Load ActiveRecord models
+  %w[
+    ../app/models/sparkloc_oauth_app
+    ../app/models/sparkloc_authorization
+    ../app/models/sparkloc_lottery_record
+  ].each { |path| require_relative path }
 end
