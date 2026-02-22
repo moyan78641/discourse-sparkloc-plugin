@@ -25,4 +25,5 @@ after_initialize do
   register_svg_icon "book"
   register_svg_icon "info-circle"
   register_svg_icon "external-link-alt"
+  register_svg_icon "dice"
 end

@@ -24,6 +24,13 @@ DiscourseSparkloc::Engine.routes.draw do
   put    "/admin/apps/:id"        => "apps_admin#update"
   delete "/admin/apps/:id"        => "apps_admin#destroy"
 
+  # Lottery
+  get  "/lottery/topics"      => "lottery#topics"
+  get  "/lottery/valid-posts"  => "lottery#valid_posts"
+  post "/lottery/draw"         => "lottery#draw"
+  get  "/lottery/result"       => "lottery#result"
+  get  "/lottery/records"      => "lottery#records"
+
   # Creem subscription
   post "/webhooks/creem"      => "creem_webhook#handle"
   post "/creem/checkout"      => "creem#create_checkout"
@@ -44,6 +51,7 @@ Discourse::Application.routes.draw do
   get "/merchants" => "list#latest"
   get "/oauth-apps" => "list#latest"
   get "/oauth-apps-admin" => "list#latest"
+  get "/lottery" => "list#latest"
 
   # User billing tab — Ember shell for direct URL access
   get "/u/:username/billing" => "users#show"

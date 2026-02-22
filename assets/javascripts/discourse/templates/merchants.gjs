@@ -164,7 +164,7 @@ class MerchantsPage extends Component {
       <h2>认证商家</h2>
 
       <div class="sparkloc-guide-box compact">
-        <svg class="fa d-icon svg-icon svg-string" xmlns="http://www.w3.org/2000/svg"><use href="#info-circle"></use></svg>
+        <svg class="fa d-icon svg-icon svg-string" xmlns="http://www.w3.org/2000/svg"><use href="#certificate"></use></svg>
         <div class="guide-content">
           <p>{{i18n "sparkloc.merchants.guide_desc"}}</p>
           <a href="https://sparkloc.com/t/topic/32" target="_blank" rel="noopener noreferrer" class="btn btn-small btn-default">
