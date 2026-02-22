@@ -34,4 +34,10 @@ after_initialize do
     sparkloc_authorization
     sparkloc_lottery_record
   ].each { |m| require File.join(plugin_root, "app", "models", m) }
+
+  # Load scheduled jobs
+  %w[
+    check_canceled_subscriptions
+    clean_old_authorizations
+  ].each { |j| require File.join(plugin_root, "app", "jobs", "scheduled", j) }
 end

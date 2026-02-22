@@ -37,6 +37,12 @@ DiscourseSparkloc::Engine.routes.draw do
   get  "/creem/subscription"  => "creem#subscription_status"
   post "/creem/cancel"        => "creem#cancel_subscription"
   post "/creem/billing-portal" => "creem#billing_portal"
+
+  # Admin subscription management
+  get    "/admin/subscriptions"       => "subscription_admin#index"
+  post   "/admin/subscriptions"       => "subscription_admin#create"
+  put    "/admin/subscriptions/renew" => "subscription_admin#renew"
+  delete "/admin/subscriptions"       => "subscription_admin#cancel"
 end
 
 # Mount engine at /sparkloc
@@ -52,6 +58,7 @@ Discourse::Application.routes.draw do
   get "/oauth-apps" => "list#latest"
   get "/oauth-apps-admin" => "list#latest"
   get "/lottery" => "list#latest"
+  get "/subscription-admin" => "list#latest", constraints: ->(req) { !req.path.end_with?(".json") }
 
   # User billing tab — Ember shell for direct URL access
   get "/u/:username/billing" => "users#show"

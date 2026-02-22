@@ -13,7 +13,6 @@ module Jobs
         return
       end
 
-      # 查找所有 creem_subscription:: 开头的 PluginStore 记录
       rows = PluginStoreRow.where(
         plugin_name: DiscourseSparkloc::PLUGIN_NAME,
       ).where("key LIKE ?", "creem_subscription::%")
@@ -21,13 +20,22 @@ module Jobs
       rows.each do |row|
         begin
           record = row.value.is_a?(String) ? JSON.parse(row.value) : row.value
-          next unless record["status"] == "canceled"
           next if record["current_period_end"].blank?
 
+          status = record["status"]
           period_end = Time.parse(record["current_period_end"])
-          next if period_end > Time.now
 
-          # 已过期，移除群组并更新状态
+          # 处理已取消的订阅：到期后移出群组
+          # 处理手动订阅：到期后自动过期
+          should_expire = false
+          if status == "canceled" && period_end <= Time.now
+            should_expire = true
+          elsif status == "active" && record["source"] == "manual" && period_end <= Time.now
+            should_expire = true
+          end
+
+          next unless should_expire
+
           username = row.key.sub("creem_subscription::", "")
           user = User.find_by(username: username)
 
