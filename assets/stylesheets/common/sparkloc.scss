@@ -199,7 +199,8 @@
   .form-row {
     margin-bottom: 12px;
     label { display: block; font-weight: bold; margin-bottom: 4px; }
-    input { width: 100%; max-width: 500px; }
+    input, textarea { width: 100%; max-width: 500px; }
+    textarea { resize: vertical; min-height: 50px; }
   }
 }
 
@@ -222,7 +223,8 @@
     .form-row {
       margin-bottom: 10px;
       label { display: block; font-weight: bold; margin-bottom: 4px; font-size: 0.85em; }
-      input { width: 100%; }
+      input, textarea { width: 100%; }
+      textarea { resize: vertical; min-height: 50px; }
     }
   }
 
@@ -294,6 +296,187 @@
   cursor: pointer;
 }
 
+// Copy toast notification
+.copy-toast {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--success);
+  color: #fff;
+  padding: 8px 20px;
+  border-radius: 6px;
+  font-size: 0.9em;
+  z-index: 10000;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+  animation: toast-fade 1.5s ease forwards;
+}
+
+@keyframes toast-fade {
+  0% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+  15% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  75% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+// Icon action buttons (copy, show/hide)
+.btn-icon-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.15s, background 0.15s;
+  flex-shrink: 0;
+
+  .svg-icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  &:hover {
+    opacity: 1;
+    background: var(--primary-very-low);
+  }
+}
+
+// App description
+.app-description {
+  font-size: 0.85em;
+  color: var(--primary-medium);
+  margin-bottom: 10px;
+  line-height: 1.4;
+}
+
+// Auth retention note
+.auth-retention-note {
+  font-size: 0.8em;
+  color: var(--primary-medium);
+  margin: -4px 0 12px;
+}
+
+// Auth list table layout
+.auth-list-table {
+  margin-top: 12px;
+}
+
+.auth-list-header {
+  display: flex;
+  padding: 8px 16px;
+  font-size: 0.8em;
+  font-weight: bold;
+  color: var(--primary-medium);
+  border-bottom: 2px solid var(--primary-low);
+}
+
+.auth-list-row {
+  display: flex;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--primary-very-low);
+  align-items: center;
+
+  &:hover { background: var(--primary-very-low); }
+}
+
+.auth-col-name {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  .auth-app-name { font-weight: 600; font-size: 0.95em; }
+  .auth-scope { font-size: 0.78em; color: var(--primary-medium); }
+}
+
+.auth-col-time {
+  width: 140px;
+  text-align: center;
+  font-size: 0.85em;
+  color: var(--primary-medium);
+  flex-shrink: 0;
+}
+
+.auth-col-status {
+  width: 80px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.auth-status-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 0.8em;
+  font-weight: 500;
+
+  &.status-approved { background: var(--success-low); color: var(--success); }
+  &.status-denied { background: var(--danger-low); color: var(--danger); }
+  &.status-revoked { background: var(--danger-low); color: var(--danger); }
+}
+
+// Auth pagination
+.auth-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 16px;
+
+  .auth-page-info { font-size: 0.85em; color: var(--primary-medium); }
+}
+
+// ========================================
+// Admin Apps Table
+// ========================================
+.admin-apps-table {
+  margin-top: 12px;
+}
+
+.admin-apps-header {
+  display: flex;
+  padding: 8px 12px;
+  font-size: 0.8em;
+  font-weight: bold;
+  color: var(--primary-medium);
+  border-bottom: 2px solid var(--primary-low);
+  gap: 8px;
+}
+
+.admin-apps-row {
+  display: flex;
+  padding: 12px;
+  border-bottom: 1px solid var(--primary-very-low);
+  align-items: center;
+  gap: 8px;
+
+  &:hover { background: var(--primary-very-low); }
+
+  &.editing {
+    background: var(--primary-very-low);
+    padding: 16px 12px;
+
+    .admin-edit-form {
+      width: 100%;
+      .form-row {
+        margin-bottom: 10px;
+        label { display: block; font-weight: bold; margin-bottom: 4px; font-size: 0.85em; }
+        input, textarea { width: 100%; max-width: 500px; }
+        textarea { resize: vertical; min-height: 50px; }
+      }
+    }
+  }
+}
+
+.admin-col-id { width: 40px; flex-shrink: 0; font-size: 0.85em; color: var(--primary-medium); }
+.admin-col-user { width: 120px; flex-shrink: 0; font-size: 0.9em; a { color: var(--tertiary); } }
+.admin-col-name { width: 150px; flex-shrink: 0; font-weight: 600; font-size: 0.9em; }
+.admin-col-desc { flex: 1; font-size: 0.85em; color: var(--primary-medium); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.admin-col-uri { width: 200px; flex-shrink: 0; font-size: 0.8em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.admin-uri-text { color: var(--primary-medium); }
+.admin-col-actions { width: 130px; flex-shrink: 0; display: flex; gap: 4px; justify-content: flex-end; }
+
 .section-title {
   margin-top: 40px;
   padding-top: 20px;
@@ -333,8 +516,17 @@
 
   .oauth-create-form {
     padding: 12px;
-    .form-row input { max-width: 100%; }
+    .form-row input, .form-row textarea { max-width: 100%; }
   }
+
+  .auth-list-header { display: none; }
+  .auth-list-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  .auth-col-time { width: auto; text-align: left; }
+  .auth-col-status { width: auto; text-align: left; }
 
   .sparkloc-merchants-page { padding: 12px; }
 

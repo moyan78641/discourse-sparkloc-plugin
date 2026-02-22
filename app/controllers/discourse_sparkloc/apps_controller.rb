@@ -17,6 +17,10 @@ module ::DiscourseSparkloc
         return render json: { error: "名称和回调地址不能为空" }, status: 400
       end
 
+      if app_name_taken?(params[:name])
+        return render json: { error: "应用名称已被使用，请换一个" }, status: 400
+      end
+
       id = next_id("oauth2_app_next_id")
       client_id = SecureRandom.uuid
       client_secret = SecureRandom.uuid
@@ -27,13 +31,14 @@ module ::DiscourseSparkloc
         "client_id" => client_id,
         "client_secret" => client_secret,
         "name" => params[:name],
+        "description" => params[:description] || "",
         "redirect_uris" => params[:redirect_uris],
         "owner_discourse_id" => current_user.id,
         "created_at" => now,
         "updated_at" => now,
       }
       save_app(id, app)
-      render json: { id: id, client_id: client_id, client_secret: client_secret, name: params[:name], redirect_uris: params[:redirect_uris] }
+      render json: { id: id, client_id: client_id, client_secret: client_secret, name: params[:name], description: app["description"], redirect_uris: params[:redirect_uris] }
     end
 
     # PUT /sparkloc/apps/:id.json
@@ -42,11 +47,16 @@ module ::DiscourseSparkloc
       return render json: { error: "not found" }, status: 404 unless app
       return render json: { error: "forbidden" }, status: 403 unless app["owner_discourse_id"] == current_user.id
 
+      if params[:name].present? && params[:name] != app["name"] && app_name_taken?(params[:name])
+        return render json: { error: "应用名称已被使用，请换一个" }, status: 400
+      end
+
       app["name"] = params[:name] if params[:name].present?
+      app["description"] = params[:description] if params.key?(:description)
       app["redirect_uris"] = params[:redirect_uris] if params[:redirect_uris].present?
       app["updated_at"] = Time.now.strftime("%Y-%m-%d %H:%M")
       save_app(params[:id], app)
-      render json: { id: app["id"], client_id: app["client_id"], name: app["name"], redirect_uris: app["redirect_uris"] }
+      render json: { id: app["id"], client_id: app["client_id"], name: app["name"], description: app["description"], redirect_uris: app["redirect_uris"] }
     end
 
     # DELETE /sparkloc/apps/:id.json
@@ -74,8 +84,17 @@ module ::DiscourseSparkloc
 
     # GET /sparkloc/authorizations.json
     def authorizations
-      auths = load_all_authorizations.select { |a| a["discourse_id"] == current_user.id }
-      render json: { authorizations: auths }
+      all_auths = load_all_authorizations
+                    .select { |a| a["discourse_id"] == current_user.id }
+                    .sort_by { |a| a["created_at"] || "" }
+                    .reverse
+
+      page = (params[:page] || 1).to_i
+      per_page = (params[:per_page] || 20).to_i
+      total = all_auths.length
+      paged = all_auths.slice((page - 1) * per_page, per_page) || []
+
+      render json: { authorizations: paged, total: total, page: page, per_page: per_page }
     end
 
     # POST /sparkloc/authorizations/:id/revoke.json
@@ -96,6 +115,10 @@ module ::DiscourseSparkloc
       new_id = current + 1
       PluginStore.set(PLUGIN_NAME, key, new_id)
       new_id
+    end
+
+    def app_name_taken?(name)
+      load_all_apps.any? { |a| a["name"]&.downcase == name.downcase }
     end
 
     def load_app(id)

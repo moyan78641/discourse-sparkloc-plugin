@@ -19,6 +19,11 @@ DiscourseSparkloc::Engine.routes.draw do
   get    "/authorizations"              => "apps#authorizations"
   post   "/authorizations/:id/revoke"   => "apps#revoke_authorization"
 
+  # Admin OAuth app management
+  get    "/admin/apps"            => "apps_admin#index"
+  put    "/admin/apps/:id"        => "apps_admin#update"
+  delete "/admin/apps/:id"        => "apps_admin#destroy"
+
   # Creem subscription
   post "/webhooks/creem"      => "creem_webhook#handle"
   post "/creem/checkout"      => "creem#create_checkout"
@@ -38,6 +43,7 @@ Discourse::Application.routes.draw do
   # These render the Ember app; Ember router then takes over client-side.
   get "/merchants" => "list#latest"
   get "/oauth-apps" => "list#latest"
+  get "/oauth-apps-admin" => "list#latest"
 
   # User billing tab — Ember shell for direct URL access
   get "/u/:username/billing" => "users#show"
@@ -58,6 +64,6 @@ Discourse::Application.routes.draw do
     post "/oauth-provider/revoke"     => "oauth2#revoke"
 
     # OIDC discovery document
-    get "/.well-known/openid-configuration" => "oauth2#openid_configuration"
+    get "/oauth-provider/.well-known/openid-configuration" => "oauth2#openid_configuration"
   end
 end
