@@ -38,6 +38,11 @@ DiscourseSparkloc::Engine.routes.draw do
   post "/creem/cancel"        => "creem#cancel_subscription"
   post "/creem/billing-portal" => "creem#billing_portal"
 
+  # DeepLX API Key management
+  get  "/deeplx/key"          => "deeplx#show"
+  post "/deeplx/key/init"     => "deeplx#init"
+  post "/deeplx/key/reset"    => "deeplx#reset"
+
   # Admin subscription management
   get    "/admin/subscriptions"       => "subscription_admin#index"
   post   "/admin/subscriptions"       => "subscription_admin#create"

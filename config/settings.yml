@@ -29,3 +29,13 @@ plugins:
   sparkloc_creem_test_mode:
     default: false
     client: false
+  sparkloc_deeplx_enabled:
+    default: false
+    client: true
+  sparkloc_deeplx_api_url:
+    default: "https://deeplx.sparkloc.org"
+    client: false
+  sparkloc_deeplx_admin_token:
+    default: ""
+    client: false
+    secret: true

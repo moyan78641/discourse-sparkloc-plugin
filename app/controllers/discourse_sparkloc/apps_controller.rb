@@ -8,7 +8,7 @@ module ::DiscourseSparkloc
     # GET /sparkloc/apps.json
     def index
       apps = SparklocOauthApp.where(owner_discourse_id: current_user.id).order(created_at: :desc)
-      render json: { apps: apps.map { |a| serialize_app(a) } }
+      render json: { apps: apps.map { |a| serialize_app(a, include_secret: true) } }
     end
 
     # POST /sparkloc/apps.json
