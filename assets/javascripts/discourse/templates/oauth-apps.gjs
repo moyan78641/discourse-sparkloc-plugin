@@ -3,7 +3,7 @@ import Component from "@glimmer/component";
 import { tracked } from "@glimmer/tracking";
 import { action } from "@ember/object";
 import { on } from "@ember/modifier";
-import { fn, eq } from "@ember/helper";
+import { fn } from "@ember/helper";
 import { ajax } from "discourse/lib/ajax";
 import { i18n } from "discourse-i18n";
 import { service } from "@ember/service";
@@ -101,6 +101,10 @@ class OauthAppsPage extends Component {
 
   @action toggleDeeplxKeyVisible() {
     this.deeplxKeyVisible = !this.deeplxKeyVisible;
+  }
+
+  get isDeeplxBanned() {
+    return this.deeplxKey?.status === "banned";
   }
 
   async loadApps() {
@@ -340,7 +344,7 @@ class OauthAppsPage extends Component {
           {{#if this.deeplxLoading}}
             <p class="loading-text">{{i18n "sparkloc.upgrade_progress.loading"}}</p>
           {{else if this.deeplxKey}}
-            {{#if (eq this.deeplxKey.status "banned")}}
+            {{#if this.isDeeplxBanned}}
               <div class="deeplx-banned-notice">{{i18n "sparkloc.deeplx.banned_notice"}}</div>
             {{/if}}
 
@@ -367,8 +371,8 @@ class OauthAppsPage extends Component {
               </div>
 
               <div class="deeplx-meta">
-                <span class="deeplx-status {{if (eq this.deeplxKey.status "banned") "banned" "active"}}">
-                  {{if (eq this.deeplxKey.status "banned") (i18n "sparkloc.deeplx.status_banned") (i18n "sparkloc.deeplx.status_active")}}
+                <span class="deeplx-status {{if this.isDeeplxBanned "banned" "active"}}">
+                  {{if this.isDeeplxBanned (i18n "sparkloc.deeplx.status_banned") (i18n "sparkloc.deeplx.status_active")}}
                 </span>
                 <span class="deeplx-usage">{{i18n "sparkloc.deeplx.usage_3h"}}: {{this.deeplxKey.usage_3h}}</span>
               </div>
@@ -377,7 +381,7 @@ class OauthAppsPage extends Component {
                 <code>{{i18n "sparkloc.deeplx.endpoint_example"}}</code>
               </div>
 
-              {{#unless (eq this.deeplxKey.status "banned")}}
+              {{#unless this.isDeeplxBanned}}
                 <div class="card-actions">
                   <button class="btn btn-default btn-small" type="button" {{on "click" this.requestDeeplxReset}}>{{i18n "sparkloc.deeplx.reset"}}</button>
                 </div>
