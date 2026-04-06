@@ -1,8 +1,5 @@
 # frozen_string_literal: true
 
-require "net/http"
-require "json"
-
 module ::DiscourseSparkloc
   class CreemController < ::ApplicationController
     requires_plugin PLUGIN_NAME
@@ -10,25 +7,22 @@ module ::DiscourseSparkloc
 
     # POST /sparkloc/creem/checkout
     def create_checkout
-      # 检查是否已有活跃订阅
       record = load_subscription(current_user.username)
       if record && %w[active trialing].include?(record["status"])
         return render json: { error: "您已有有效订阅" }, status: 422
       end
 
-      success_url = "#{Discourse.base_url}/u/#{current_user.username}/billing/subscriptions"
-
       body = {
         product_id: SiteSetting.sparkloc_creem_product_id,
-        success_url: success_url,
+        success_url: "#{Discourse.base_url}/u/#{current_user.username}/billing/subscriptions",
         customer: { email: current_user.email },
         metadata: { discourse_username: current_user.username },
       }
 
-      resp = creem_request(:post, "/v1/checkouts", body: body)
+      resp = DiscourseSparkloc::CreemClient.create_checkout(body)
 
       if resp.is_a?(Net::HTTPSuccess)
-        data = JSON.parse(resp.body)
+        data = DiscourseSparkloc::CreemClient.parse_json(resp) || {}
         checkout_url = data["checkout_url"] || data["url"]
         render json: { checkout_url: checkout_url }
       else
@@ -62,12 +56,14 @@ module ::DiscourseSparkloc
         return render json: { error: "没有可取消的订阅" }, status: 422
       end
 
-      unless record["status"] == "active" || record["status"] == "trialing"
+      unless %w[active trialing].include?(record["status"])
         return render json: { error: "当前订阅状态无法取消" }, status: 422
       end
 
-      sub_id = record["creem_subscription_id"]
-      resp = creem_request(:post, "/v1/subscriptions/#{sub_id}/cancel", body: { mode: "scheduled" })
+      resp = DiscourseSparkloc::CreemClient.cancel_subscription(
+        record["creem_subscription_id"],
+        mode: "scheduled",
+      )
 
       if resp.is_a?(Net::HTTPSuccess)
         render json: { success: true }
@@ -87,10 +83,10 @@ module ::DiscourseSparkloc
         return render json: { error: "没有可管理的订阅" }, status: 422
       end
 
-      resp = creem_request(:post, "/v1/customers/billing", body: { customer_id: record["creem_customer_id"] })
+      resp = DiscourseSparkloc::CreemClient.billing_portal(record["creem_customer_id"])
 
       if resp.is_a?(Net::HTTPSuccess)
-        data = JSON.parse(resp.body)
+        data = DiscourseSparkloc::CreemClient.parse_json(resp) || {}
         render json: { url: data["customer_portal_link"] }
       else
         Rails.logger.error("[Creem] 获取 billing portal 失败: #{resp.code} #{resp.body}")
@@ -103,32 +99,11 @@ module ::DiscourseSparkloc
 
     private
 
-    def creem_api_base
-      SiteSetting.sparkloc_creem_test_mode ? "https://test-api.creem.io" : "https://api.creem.io"
-    end
-
-    def creem_request(method, path, body: nil)
-      uri = URI("#{creem_api_base}#{path}")
-      http = Net::HTTP.new(uri.host, uri.port)
-      http.use_ssl = true
-      http.open_timeout = 10
-      http.read_timeout = 30
-
-      req = case method
-            when :post then Net::HTTP::Post.new(uri)
-            when :get  then Net::HTTP::Get.new(uri)
-            end
-      req["x-api-key"] = SiteSetting.sparkloc_creem_api_key
-      req["Content-Type"] = "application/json"
-      req.body = body.to_json if body
-
-      http.request(req)
-    end
-
     def load_subscription(username)
       key = "creem_subscription::#{username}"
       raw = PluginStore.get(PLUGIN_NAME, key)
       return nil if raw.nil?
+
       raw.is_a?(String) ? JSON.parse(raw) : raw
     end
   end

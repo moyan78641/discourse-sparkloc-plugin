@@ -11,6 +11,7 @@ module ::DiscourseSparkloc
 end
 
 require_relative "lib/discourse_sparkloc/engine"
+require_relative "lib/discourse_sparkloc/creem_client"
 require_relative "lib/discourse_sparkloc/jwt_provider"
 require_relative "lib/discourse_sparkloc/sso_helper"
 
